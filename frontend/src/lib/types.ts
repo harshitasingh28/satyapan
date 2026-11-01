@@ -104,6 +104,7 @@ export type MediaAssessment = {
   frames?: number;
   deepfake?: string;
   voice_authenticity?: string;
+  synthetic_signal?: string | number;
   ocr_text?: string;
 };
 

@@ -345,7 +345,9 @@ def test_k17_uncalibrated_detector_score_is_not_presented(tmp_dir, monkeypatch, 
         rep = to_report(st)
         ev = [e for e in rep.evidence if e.tool == "sightengine_genai"]
         assert ev and ev[0].stance == "neutral" and "0.97" not in ev[0].established
-        assert rep.media_assessment["M1"]["synthetic_signal"] == "NOT_CALIBRATED"
+        assert ev[0].strength == "none" and "never changes the verdict" in ev[0].established
+        assert rep.media_assessment["M1"]["synthetic_signal"] == "VENDOR_FLAGGED_UNVALIDATED"
+        assert "0.97" not in str(rep.media_assessment["M1"]["synthetic_signal"])
     finally:
         monkeypatch.undo()
         get_settings.cache_clear()

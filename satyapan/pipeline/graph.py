@@ -745,6 +745,13 @@ def investigate_links(state: dict, ctx: Context) -> dict:
     return state
 
 
+# An uncalibrated vendor score is shown as a band, never as a number a reader could take as "x% AI" (audit K17).
+SIGHTENGINE_MODEL_PAGE = "https://sightengine.com/detect-ai-generated-images"
+VENDOR_BANDS = {"flagged": ("VENDOR_FLAGGED_UNVALIDATED", "flagged this image as likely AI-generated"),
+                "not_flagged": ("VENDOR_NOT_FLAGGED_UNVALIDATED", "did not flag this image as AI-generated"),
+                "unclear": ("VENDOR_UNCLEAR_UNVALIDATED", "gave no clear answer for this image")}
+
+
 def _image_checks(state: dict, ctx: Context, media_id: str, path: Path, remote_ok: bool) -> dict:
     out = {"provenance": "NO_MATCH_IN_INDEX" if ctx.image_index else "INDEX_EMPTY", "tier": "unknown_provenance",
            "matches": []}
@@ -803,20 +810,23 @@ def _image_checks(state: dict, ctx: Context, media_id: str, path: Path, remote_o
         if se and se["score"] is not None:
             calibrated = ctx.settings.ai_image_detector_calibrated
             high = se["score"] >= 0.9
+            band = "flagged" if se["score"] >= 0.9 else "not_flagged" if se["score"] <= 0.1 else "unclear"
             state["evidence"].add(
-                tool="sightengine_genai", source_name="Sightengine AI-image detector", source_url=None, target=media_id,
+                tool="sightengine_genai", source_name="Sightengine AI-image detector", source_url=SIGHTENGINE_MODEL_PAGE,
+                target=media_id,
                 kind="synthetic_signal", stance="contradicts" if (high and calibrated) else "neutral",
                 strength="weak" if (high and calibrated) else "none",
                 # An uncalibrated score is not a probability. It is kept for calibration work only and
                 # is never shown as a number a reader could take as "x% AI".
                 established=(f"AI-generation score {se['score']:.2f} from a detector calibrated on our test set."
-                             if calibrated else "An AI-image detector was run. Its score is not shown because the "
-                             "detector has not passed calibration on forwarded images."),
+                             if calibrated else f"Sightengine's AI-image detector {VENDOR_BANDS[band][1]}. This is "
+                             "the vendor's own judgement. Satyapan has not validated it on forwarded images, so it is "
+                             "shown for information and never changes the verdict."),
                 independence_key="ai_detector",
                 data={**se, "calibrated": calibrated} if calibrated else
-                     {"calibrated": False, "raw_score_for_calibration_only": se["score"]},
+                     {"calibrated": False, "vendor_band": band, "raw_score_for_calibration_only": se["score"]},
                 limitations=["Detector scores are unreliable on compressed or unseen-generator images."])
-            out["synthetic_signal"] = round(se["score"], 3) if calibrated else "NOT_CALIBRATED"
+            out["synthetic_signal"] = round(se["score"], 3) if calibrated else VENDOR_BANDS[band][0]
     return out
 
 
