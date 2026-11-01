@@ -32,7 +32,7 @@ from satyapan.http import ApiClient
 from satyapan.logging_setup import redact
 from satyapan.links import rdap, safebrowsing, urlscan
 from satyapan.links.urlinfo import analyse_url, embedded_targets
-from satyapan.llm import llm_extract_claims
+from satyapan.llm import chat_json_with_model, llm_extract_claims
 from satyapan.media import c2pa_inspect, remote
 from satyapan.media.audio import AudioIndex, voice_authenticity
 from satyapan.media.image_index import ImageIndex
@@ -40,6 +40,7 @@ from satyapan.media.video import keyframes
 from satyapan.models import Claim, Report, Statement, ToolRun
 from satyapan.ocr import ocr_image
 from satyapan.pipeline import checks as chk
+from satyapan.pipeline import planner as plan_mod
 from satyapan.pipeline.citations import validate
 from satyapan.pipeline.compare import compare as ai_compare
 from satyapan.pipeline.evidence import EvidenceLog, aggregate
@@ -59,6 +60,7 @@ FC_MATCH, FC_POSSIBLE, KNOWN_MATCH = 85, 70, 85
 # never evidence by itself.
 SEMANTIC_CANDIDATE = float(os.environ.get("SATYAPAN_SEMANTIC_CANDIDATE", "0.80"))
 NODE_LABELS = {"validate_input": "Checking the submission", "extract_claims": "Extracting claims",
+               "plan_checks": "AI planning which checks to run",
                "check_factchecks": "Searching published fact-checks", "check_official": "Searching official releases",
                "investigate_links": "Checking links and domains", "analyse_media": "Analysing media provenance",
                "compare_evidence": "AI comparison of claim and evidence", "rank_evidence": "Ranking evidence",
@@ -164,9 +166,11 @@ def new_state(text: str = "", links: list[str] | None = None, media: list[tuple[
             "claims": [], "primary": None, "links": [], "media": [], "evidence": EvidenceLog(),
             "tool_runs": [], "trace": [], "failed_tools": [], "limitations": [], "media_assessment": {},
             "loops": 0, "agg": None, "verdict": None, "statements": [], "citation_problems": [], "report_mode": "template",
-            "official_candidates": [], "fc_candidates": [], "flags": [],
+            "official_candidates": [], "fc_candidates": [], "flags": [], "notes": {},
+            "plan": {"factcheck_queries": [], "official_query": None, "skip_official": False},
             "ai": {"chat_model": None, "embedding_model": None, "extraction": "not_configured",
-                   "comparison": "not_configured", "explanation": "not_configured", "problems": [], "pairs": []}}
+                   "comparison": "not_configured", "explanation": "not_configured", "problems": [], "pairs": [],
+                   "plan": {"status": "not_run"}}}
 
 
 def _run(state: dict, tool: str, target: str, fn, *args, local: bool = False, **kwargs):
@@ -289,6 +293,17 @@ def extract(state: dict, ctx: Context) -> dict:
                 ai["problems"] += [f"proposed claim not in the message: {r['quote'][:80]!r}" for r in rejected]
     state["claims"] = claims
     state["primary"] = max(claims, key=lambda c: c.checkworthiness) if claims else None
+    langs = sorted({c.language for c in claims if c.language})
+    if claims:
+        _note(state, "extract_claims", f"{len(claims)} claim(s) found. Language: "
+                                       f"{', '.join(LANG_NAMES.get(l, l) for l in langs) or 'unknown'}.")
+        ai_kept = [c for c in claims if c.source == "llm"]
+        if ai_kept:
+            _note(state, "extract_claims", f"{len(ai_kept)} claim(s) proposed by the AI, each found word for word "
+                                           f"in the message.")
+    rejected = [p for p in ai["problems"] if p.startswith("proposed claim not in the message")]
+    if rejected:
+        _note(state, "extract_claims", f"{len(rejected)} AI-proposed claim(s) rejected: not in the message.")
     links = list(state["user_links"])
     for c in claims:
         links += c.urls
@@ -301,6 +316,103 @@ def extract(state: dict, ctx: Context) -> dict:
     return state
 
 
+LANG_NAMES = {"en": "English", "hi": "Hindi", "te": "Telugu", "mixed": "mixed languages", "other": "another language"}
+SKIPPABLE_TYPES = {"health_or_science", "viral_rumour_or_hoax", "finance_or_banking", "scam_or_phishing", "other"}
+
+
+def _note(state: dict, node: str, text: str) -> None:
+    state["notes"].setdefault(node, []).append(text)
+
+
+def plan_checks(state: dict, ctx: Context) -> dict:
+    """Bounded AI planning (see satyapan/pipeline/planner.py). The model chooses optional checks and writes
+    search queries. Code keeps the safety floor, validates every query and never lets the plan create evidence."""
+    claim: Claim | None = state["primary"]
+    ai = state["ai"]
+    settings = ctx.settings
+    gov = plan_mod.government_signal(claim.entities if claim else [], state["links"], ctx.official_domains)
+    plan = {"status": "not_run", "model": None, "claim_type": None,
+            "language": claim.language if claim else None, "decisions": [], "factcheck_queries": [],
+            "official_query": None, "problems": []}
+    raw = None
+    if not claim:
+        plan["status"] = "no_claim"
+    elif not settings.llm_configured:
+        plan["status"] = "not_configured"
+    elif not state["consent"]["third_party_text"]:
+        plan["status"] = "no_consent"
+    elif _budget_ok(state, ctx, "hf_chat", "plan", True):
+        brief = {"message": state["text"][:1500], "claims": [c.text[:300] for c in state["claims"][:3]],
+                 "detected_language": claim.language, "named_bodies": claim.entities[:6],
+                 "links": [urlsplit(u).hostname for u in state["links"][:5]],
+                 "media": [m["info"].kind for m in state["media"]]}
+        import json as _json
+        out = _run(state, "ai_planner", claim.id, chat_json_with_model, ctx.client, plan_mod.PLANNER_PROMPT,
+                   _json.dumps(brief, ensure_ascii=False), 450)
+        if out:
+            raw, plan["model"] = out
+            plan["status"] = "used"
+        else:
+            plan["status"] = f"failed: {state['tool_runs'][-1].status}"
+    valid, problems = plan_mod.validate_plan(raw, state["text"], claim.text if claim else "") if raw is not None \
+        else ({"claim_type": None, "language": None, "checks": {}, "factcheck_queries": [], "official_query": None}, [])
+    plan["problems"] = problems
+    ai["problems"] += problems
+    used = plan["status"] == "used"
+    if used:
+        plan["claim_type"] = valid["claim_type"]
+        plan["language"] = valid["language"] or plan["language"]
+        plan["factcheck_queries"] = valid["factcheck_queries"]
+        plan["official_query"] = valid["official_query"]
+    fc_why = valid["checks"].get("factcheck_search", {}).get("why", "")
+    pib_choice = valid["checks"].get("pib_release_index", {"use": True, "why": ""})
+    decisions = []
+    if claim:
+        decisions.append({"check": "Published fact-checks, claim as written", "run": True, "decided_by": "code",
+                          "why": "Always searched, whatever the plan says."})
+        decisions.append({"check": "Extra fact-check searches", "run": bool(plan["factcheck_queries"]),
+                          "decided_by": "ai" if used else "code",
+                          "why": (fc_why or "The AI wrote English keyword searches.") if plan["factcheck_queries"]
+                          else ("No AI plan." if not used else "The AI added no extra searches."),
+                          "queries": plan["factcheck_queries"]})
+        skip = used and not pib_choice["use"] and not gov and claim.language == "en" \
+            and valid["claim_type"] in SKIPPABLE_TYPES
+        if gov:
+            pib_dec = {"run": True, "decided_by": "code",
+                       "why": "The message names a government body or links an official site, so official "
+                              "releases are always searched."}
+        elif skip:
+            pib_dec = {"run": False, "decided_by": "ai", "why": pib_choice["why"] or "Not a government claim."}
+        else:
+            pib_dec = {"run": True, "decided_by": "ai" if used else "code",
+                       "why": pib_choice["why"] if used and pib_choice["why"] else "Searched by default."}
+        decisions.append({"check": "Official PIB releases", **pib_dec,
+                          "queries": [plan["official_query"]] if plan["official_query"] and pib_dec["run"] else []})
+        state["plan"]["skip_official"] = not pib_dec["run"]
+    decisions.append({"check": "Link checks (domain rules, RDAP, Safe Browsing)", "run": bool(state["links"]),
+                      "decided_by": "code", "why": "Every link is always checked." if state["links"] else "No links."})
+    decisions.append({"check": "Media audit (OCR, Content Credentials, reuse index)", "run": bool(state["media"]),
+                      "decided_by": "code", "why": "Every file is always audited." if state["media"] else "No files."})
+    plan["decisions"] = decisions
+    state["plan"]["factcheck_queries"] = plan["factcheck_queries"]
+    state["plan"]["official_query"] = plan["official_query"] if not state["plan"]["skip_official"] else None
+    ai["plan"] = plan
+    if used:
+        _note(state, "plan_checks", f"Claim type: {plan['claim_type'].replace('_', ' ')}. "
+                                    f"Language: {LANG_NAMES.get(plan['language'] or '', plan['language'] or 'unknown')}.")
+        for q in plan["factcheck_queries"]:
+            _note(state, "plan_checks", f"AI search query: {q}")
+        if plan["official_query"]:
+            _note(state, "plan_checks", f"AI official-release query: {plan['official_query']}")
+        if state["plan"]["skip_official"]:
+            _note(state, "plan_checks", f"Official releases skipped by the AI: {pib_choice['why'] or 'not a government claim'}")
+        for p in problems:
+            _note(state, "plan_checks", f"Rejected by code: {p}")
+    else:
+        _note(state, "plan_checks", f"No AI plan ({plan['status'].replace('_', ' ')}). The default checks run.")
+    return state
+
+
 def check_factchecks(state: dict, ctx: Context) -> dict:
     claim: Claim | None = state["primary"]
     if not claim:
@@ -308,7 +420,21 @@ def check_factchecks(state: dict, ctx: Context) -> dict:
         return state
     lang = claim.language if claim.language in ("en", "hi", "te") else None
     res = _run(state, "factcheck_search", claim.id, factcheck.search, ctx.client, claim.text[:300], language=lang)
-    for rv in (res or {}).get("reviews", [])[:6]:
+    reviews = list((res or {}).get("reviews", [])[:6])
+    for r in reviews:
+        r["found_by"] = "the claim as written"
+    seen_urls = {r.get("url") for r in reviews}
+    for q in state["plan"]["factcheck_queries"][:plan_mod.MAX_QUERIES]:
+        extra = _run(state, "factcheck_search", f"AI query: {q[:60]}", factcheck.search, ctx.client, q)
+        found = 0
+        for r in (extra or {}).get("reviews", [])[:6]:
+            if r.get("url") not in seen_urls:
+                seen_urls.add(r.get("url"))
+                reviews.append({**r, "found_by": f"AI query '{q}'"})
+                found += 1
+        _note(state, "check_factchecks", f"AI query '{q}': {found} new fact-check(s)")
+    _note(state, "check_factchecks", f"{len(reviews)} published fact-check(s) found in total")
+    for rv in reviews[:12]:
         sim = similarity(claim.text, rv["claim_text"])
         site = (rv.get("site") or "").lower()
         known_fc = site in ctx.factcheckers
@@ -321,7 +447,7 @@ def check_factchecks(state: dict, ctx: Context) -> dict:
                 independence_key=f"factcheck:{site}",
                 limitations=["Similarity is lexical. The reviewed claim may differ in detail."] if sim < FC_MATCH else [],
                 data={"similarity": sim, "rating": rv["rating"], "review_date": rv["review_date"],
-                      "reviewed_claim": rv["claim_text"][:300]})
+                      "reviewed_claim": rv["claim_text"][:300], "found_by": rv.get("found_by")})
         elif rv["rating_class"] == "true" and sim >= FC_MATCH:
             state["evidence"].add(
                 tool="factcheck_search", source_name=f"{rv['publisher'] or site} (via Google Fact Check Tools)",
@@ -340,7 +466,7 @@ def check_factchecks(state: dict, ctx: Context) -> dict:
                 established=f"The claim matches a previously debunked claim (similarity {score}/100).",
                 independence_key=f"known:{item.get('url')}", external=False,
                 data={"similarity": score, "debunked_claim": item["text"][:300], "date": item.get("date")})
-    _factcheck_candidates(state, ctx, claim, (res or {}).get("reviews", [])[:6])
+    _factcheck_candidates(state, ctx, claim, reviews[:12])
     return state
 
 
@@ -404,6 +530,10 @@ def title_confirmed(message: str, title: str, release_text: str) -> tuple[bool, 
 def check_official(state: dict, ctx: Context) -> dict:
     claim: Claim | None = state["primary"]
     if not claim:
+        return state
+    if state["plan"]["skip_official"]:
+        _skip(state, "pib_release_index", claim.id, ToolStatus.SKIPPED_NOT_APPLICABLE,
+              "the AI plan judged this is not a government claim, and code found no government signal")
         return state
     hits = _run(state, "pib_release_index", claim.id, ctx.pib.search, claim.text, 3, local=True) or []
     cands: list[dict] = []
@@ -480,6 +610,11 @@ def check_official(state: dict, ctx: Context) -> dict:
         linked = ctx.pib.by_prid(p)
         if linked:
             add_cand(linked, prid_identity=True)
+    if state["plan"]["official_query"]:
+        extra = _run(state, "pib_release_index", f"AI query: {state['plan']['official_query'][:60]}", ctx.pib.search,
+                     state["plan"]["official_query"], 2, local=True) or []
+        for h in extra:
+            add_cand(h["doc"], planner_query=True)     # a candidate for the AI comparison only, never evidence by itself
     if _semantic_ready(state, ctx):
         docs = ctx.pib.load()[:5000]
         if docs:
@@ -773,6 +908,7 @@ def compare_evidence(state: dict, ctx: Context) -> dict:
         return state
     if not cands:
         ai["comparison"] = "no_candidates"
+        _note(state, "compare_evidence", "No official release or fact-check was close enough to compare.")
         return state
     if not _budget_ok(state, ctx, "hf_chat", claim.id, True):
         ai["comparison"] = "failed: RATE_LIMITED"
@@ -797,6 +933,14 @@ def compare_evidence(state: dict, ctx: Context) -> dict:
             _apply_official(state, ctx, claim, c, pr, by_id, links_ok)
         else:
             _apply_factcheck(state, ctx, claim, c, pr)
+        kind = "official release" if c["type"] == "official_release" else "fact-check"
+        if pr.get("verified"):
+            _note(state, "compare_evidence", f"{c['id']} ({kind}): AI says {pr.get('relation') or 'no relation'}"
+                                             f"{'' if pr.get('same_subject') else ', different subject'}. "
+                                             f"Quotes checked against the source: verified.")
+        else:
+            _note(state, "compare_evidence", f"{c['id']} ({kind}): AI output rejected by code "
+                                             f"({pr.get('problem') or 'no usable answer'}).")
     return state
 
 
@@ -946,6 +1090,7 @@ def decide(state: dict, ctx: Context) -> dict:
                 v["explanation"] += FLAG_TEXT[flag]
                 break
     state["verdict"] = v
+    _note(state, "decide", f"Code decides: {v['label']} ({v['why']}). The AI cannot set this.")
     return state
 
 
@@ -997,12 +1142,13 @@ def validate_citations(state: dict, ctx: Context) -> dict:
     return state
 
 
-NODES = {"validate_input": validate_input, "extract_claims": extract, "check_factchecks": check_factchecks,
+NODES = {"validate_input": validate_input, "extract_claims": extract, "plan_checks": plan_checks,
+         "check_factchecks": check_factchecks,
          "check_official": check_official, "investigate_links": investigate_links, "analyse_media": analyse_media,
          "compare_evidence": compare_evidence,
          "rank_evidence": rank, "resolve_conflict": resolve_conflict, "decide": decide,
          "write_report": write_report, "validate_citations": validate_citations}
-LINEAR = ["validate_input", "extract_claims", "check_factchecks", "check_official", "investigate_links",
+LINEAR = ["validate_input", "extract_claims", "plan_checks", "check_factchecks", "check_official", "investigate_links",
           "analyse_media", "compare_evidence", "rank_evidence"]
 TAIL = ["decide", "write_report", "validate_citations"]
 
@@ -1018,10 +1164,11 @@ def traced(name: str, ctx: Context):
         ms = round((time.perf_counter() - start) * 1000, 1)
         new_runs = state["tool_runs"][runs_before:]
         new_ev = [e.id for e in state["evidence"].items[ev_before:]]
+        notes = state["notes"].get(name, [])[:12]
         state["trace"].append({"node": name, "ms": ms, "tool_runs": [f"{r.tool}:{r.status}" for r in new_runs],
-                               "new_evidence": new_ev})
+                               "new_evidence": new_ev, "notes": notes})
         _emit(ctx, state, {"node": name, "phase": "end", "label": label, "ms": ms,
-                           "tool_runs": [asdict(r) for r in new_runs], "new_evidence": new_ev})
+                           "tool_runs": [asdict(r) for r in new_runs], "new_evidence": new_ev, "notes": notes})
         return state
     return node
 
