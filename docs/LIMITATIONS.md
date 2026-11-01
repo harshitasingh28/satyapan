@@ -37,3 +37,9 @@
 - **Not a deepfake detector.** No detector is integrated or validated.
 - **Records are per browser.** Clearing browser storage loses the access tokens, and server copies expire after 7 days.
 - **Rate limits and AI budgets are per Cloud Run instance**, not global.
+
+## Added 1 Nov 2026 (evening)
+
+- The AI planner is bounded: one model call that can add up to 3 fact-check searches and skip the official-release search only for an English, non-government claim. It cannot remove the safety checks, add evidence or set a verdict. It is not an autonomous agent.
+- The AI-image detector (Sightengine, optional) is the vendor's judgement, not validated by Satyapan on forwarded images. It is shown as flagged, not flagged or unclear, never as a percentage, and never changes the verdict. Satyapan does not detect face swaps, video deepfakes or cloned voices.
+- The debunked-media index is empty in the current deployment, so media reuse cannot produce a verdict there until real debunked items with their fact-check links are imported.

@@ -9,7 +9,7 @@ The API runs on a free server that sleeps when idle. If the first check takes ab
 
 Paste a forwarded message, a link, a screenshot, a photo, a video or an audio clip. Satyapan extracts the claims, searches published fact-checks and official PIB releases, checks every link, audits the media for reuse and Content Credentials, and returns **GENUINE**, **FAKE** or **UNVERIFIED**. Each verdict comes with quoted, linked and timestamped evidence. The web app shows every step live as it runs.
 
-**Code decides the verdict.** The hosted AI model (Cloudflare Workers AI on its free plan by default, or any other hosted provider you configure) extracts claims, compares claims with retrieved evidence and writes an explanation. Code checks every quote and citation it produces. The model can block a GENUINE verdict but never sets one.
+**Code decides the verdict.** The hosted AI model (Cloudflare Workers AI on its free plan by default, or any other hosted provider you configure) plans which optional checks to run, extracts claims, compares claims with retrieved evidence and writes an explanation. Code checks every quote and citation it produces. The model can block a GENUINE verdict but never sets one.
 
 Satyapan is **not a deepfake detector**. It reports media reuse, credentials and provenance, and says so on every report.
 
@@ -18,10 +18,22 @@ Satyapan is **not a deepfake detector**. It reports media reuse, credentials and
 | Verdict | Needs |
 |---|---|
 | GENUINE | A specific official release with matching facts. Either every word of the release title is in the message (no added negation), or the message links that exact release (PIB `PRID`) and an AI comparison found the same facts with quotes verified in code, and every number and date matches. Not when the PIB link points to a different release, not when old news is presented as new, not when the AI comparison contradicts it |
-| FAKE | Reliable contradicting evidence: a fact-check rated false that matches the claim (lexically, or semantically with a verified AI match and no conflicting numbers or dates), a Safe Browsing flag, an impersonating domain, or an exact or modified copy of a debunked image |
+| FAKE | Reliable contradicting evidence: a fact-check rated false that matches the claim (lexically, or semantically with a verified AI match and no conflicting numbers or dates), a Safe Browsing flag, an impersonating domain (in any language, and for a link sent on its own), or an exact or modified copy of a debunked image (needs an index of debunked media, which is empty in the current deployment) |
 | UNVERIFIED | Everything else, with a reason: not enough evidence, conflicting evidence, outdated news, link mismatch, AI veto, or tools unavailable |
 
 Embedding similarity alone never produces a verdict. A similar-looking photo is never evidence of fake.
+
+## How the AI reasons (and where code takes over)
+
+Every check runs as a fixed set of steps that the live trace shows one by one:
+
+1. **Extract claims.** The model proposes claims as exact quotes, in English, Hindi or Telugu. A quote that is not in the message is dropped.
+2. **Plan the checks (AI, bounded).** The model classifies the claim, chooses optional checks and writes up to 3 English keyword searches for published fact-checks, so a Hindi or Telugu claim, or an unusual wording, can still reach them. Code rejects any query that adds a number or a link, and keeps a safety floor the model cannot switch off: the claim as written is always searched, every link and file is always checked, and official releases are always searched when the message names the government. Implementation: `satyapan/pipeline/planner.py` and `plan_checks` in `satyapan/pipeline/graph.py`.
+3. **Gather evidence.** Google Fact Check Tools, the PIB release index (MongoDB, bge-m3 embeddings), domain rules, RDAP, Safe Browsing, OCR, Content Credentials and the media reuse index.
+4. **Compare (AI) and verify (code).** The model compares the claim with each close official release or fact-check. Every quote it cites must be found in the source, or its answer is rejected.
+5. **Decide (code only).** An evidence gate weighs independent sources and returns GENUINE, FAKE or UNVERIFIED with a reason.
+
+This is a bounded planner, not an open-ended agent: one planning call, at most 3 extra searches, and a fallback to the default checks when the model is unavailable.
 
 ## Architecture
 
