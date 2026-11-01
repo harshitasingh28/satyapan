@@ -412,6 +412,7 @@ def plan_checks(state: dict, ctx: Context) -> dict:
     plan["decisions"] = decisions
     state["plan"]["factcheck_queries"] = plan["factcheck_queries"]
     state["plan"]["official_query"] = plan["official_query"] if not state["plan"]["skip_official"] else None
+    state["plan"]["source_text"], state["plan"]["brief_text"] = source_text, brief_text   # for the one re-plan
     ai["plan"] = plan
     if used:
         _note(state, "plan_checks", f"Claim type: {plan['claim_type'].replace('_', ' ')}. "
@@ -440,17 +441,50 @@ def check_factchecks(state: dict, ctx: Context) -> dict:
     for r in reviews:
         r["found_by"] = "the claim as written"
     seen_urls = {r.get("url") for r in reviews}
-    for q in state["plan"]["factcheck_queries"][:plan_mod.MAX_QUERIES]:
-        extra = _run(state, "factcheck_search", f"AI query: {q[:60]}", factcheck.search, ctx.client, q)
+    _search_more(state, ctx, state["plan"]["factcheck_queries"][:plan_mod.MAX_QUERIES], "AI query", reviews, seen_urls)
+    _note(state, "check_factchecks", f"{len(reviews)} published fact-check(s) found in total")
+    reviews = reviews[:12]
+    _score_reviews(state, ctx, claim, reviews)
+    if ctx.known_claims:
+        def best_known():
+            scored = [(similarity(claim.text, k["text"]), k) for k in ctx.known_claims]
+            return max(scored, key=lambda x: x[0]) if scored else (0, None)
+        score, item = _run(state, "known_claims_index", claim.id, best_known, local=True) or (0, None)
+        if item and score >= KNOWN_MATCH:
+            state["evidence"].add(
+                tool="known_claims_index", source_name=item.get("publisher") or "Known debunk index",
+                source_url=item.get("url"), target=claim.id, kind="fact_check", stance="contradicts", strength="strong",
+                established=f"The claim matches a previously debunked claim (similarity {score}/100).",
+                independence_key=f"known:{item.get('url')}", external=False,
+                data={"similarity": score, "debunked_claim": item["text"][:300], "date": item.get("date")})
+    _factcheck_candidates(state, ctx, claim, reviews)
+    if _needs_replan(state, ctx, claim):
+        new = _replan(state, ctx, claim, reviews, seen_urls)
+        if new:
+            _score_reviews(state, ctx, claim, new)
+            _factcheck_candidates(state, ctx, claim, reviews + new)
+    return state
+
+
+def _search_more(state: dict, ctx: Context, queries: list[str], label: str, reviews: list[dict], seen_urls: set) -> int:
+    """Run extra fact-check searches written by the AI. New results are only CANDIDATES for the normal checks."""
+    total = 0
+    for q in queries:
+        extra = _run(state, "factcheck_search", f"{label}: {q[:60]}", factcheck.search, ctx.client, q)
         found = 0
         for r in (extra or {}).get("reviews", [])[:6]:
             if r.get("url") not in seen_urls:
                 seen_urls.add(r.get("url"))
-                reviews.append({**r, "found_by": f"AI query '{q}'"})
+                reviews.append({**r, "found_by": f"{label} '{q}'"})
                 found += 1
-        _note(state, "check_factchecks", f"AI query '{q}': {found} new fact-check(s)")
-    _note(state, "check_factchecks", f"{len(reviews)} published fact-check(s) found in total")
-    for rv in reviews[:12]:
+        total += found
+        _note(state, "check_factchecks", f"{label} '{q}': {found} new fact-check(s)")
+    return total
+
+
+def _score_reviews(state: dict, ctx: Context, claim: Claim, reviews: list[dict]) -> None:
+    """Fact-checks whose reviewed claim is lexically close to the ORIGINAL claim become evidence."""
+    for rv in reviews:
         sim = similarity(claim.text, rv["claim_text"])
         site = (rv.get("site") or "").lower()
         known_fc = site in ctx.factcheckers
@@ -470,20 +504,51 @@ def check_factchecks(state: dict, ctx: Context) -> dict:
                 source_url=rv["url"], target=claim.id, kind="fact_check", stance="supports", strength="moderate",
                 established=f"A fact-check rated a similar claim '{rv['rating']}' (text similarity {sim}/100).",
                 independence_key=f"factcheck:{site}", data={"similarity": sim, "rating": rv["rating"]})
-    if ctx.known_claims:
-        def best_known():
-            scored = [(similarity(claim.text, k["text"]), k) for k in ctx.known_claims]
-            return max(scored, key=lambda x: x[0]) if scored else (0, None)
-        score, item = _run(state, "known_claims_index", claim.id, best_known, local=True) or (0, None)
-        if item and score >= KNOWN_MATCH:
-            state["evidence"].add(
-                tool="known_claims_index", source_name=item.get("publisher") or "Known debunk index",
-                source_url=item.get("url"), target=claim.id, kind="fact_check", stance="contradicts", strength="strong",
-                established=f"The claim matches a previously debunked claim (similarity {score}/100).",
-                independence_key=f"known:{item.get('url')}", external=False,
-                data={"similarity": score, "debunked_claim": item["text"][:300], "date": item.get("date")})
-    _factcheck_candidates(state, ctx, claim, reviews[:12])
-    return state
+
+
+def _needs_replan(state: dict, ctx: Context, claim: Claim) -> bool:
+    """One bounded second attempt: only after a used AI plan, only for claims that published fact-checks can
+    answer (not link scams, which the link checks decide), and only when nothing usable was found."""
+    plan = state["ai"].get("plan") or {}
+    if plan.get("status") != "used" or plan.get("claim_type") == "scam_or_phishing":
+        return False
+    if state["fc_candidates"]:
+        return False
+    usable = [e for e in state["evidence"].items
+              if e.tool in ("factcheck_search", "known_claims_index") and e.strength != "none"]
+    return not usable
+
+
+def _replan(state: dict, ctx: Context, claim: Claim, reviews: list[dict], seen_urls: set) -> list[dict]:
+    """Ask the planner once more, showing it what its searches returned. Returns the NEW reviews found."""
+    import json as _json
+    rp = {"status": "not_run", "why": "", "queries": [], "problems": [], "found": 0}
+    state["ai"]["plan"]["replan"] = rp
+    if not _budget_ok(state, ctx, "hf_chat", "replan", True):
+        rp["status"] = "failed: RATE_LIMITED"
+        return []
+    earlier = [claim.text] + list(state["plan"]["factcheck_queries"])
+    brief = {"message": state["plan"].get("brief_text", "")[:1500], "claim": claim.text[:300],
+             "earlier_queries": earlier[1:],
+             "found_but_not_close": [r["claim_text"][:160] for r in reviews[:5]]}
+    out = _run(state, "ai_replanner", claim.id, chat_json_with_model, ctx.client, plan_mod.REPLAN_PROMPT,
+               _json.dumps(brief, ensure_ascii=False), 300)
+    if not out:
+        rp["status"] = f"failed: {state['tool_runs'][-1].status}"
+        _note(state, "check_factchecks", "No fact-check was close enough. The AI re-plan was unavailable.")
+        return []
+    queries, problems, why = plan_mod.validate_replan(out[0], state["plan"].get("source_text", ""), earlier)
+    rp.update(status="used", why=why, queries=queries, problems=problems)
+    state["ai"]["problems"] += problems
+    _note(state, "check_factchecks", "No fact-check was close enough, so the AI re-planned once"
+                                     + (f" ({why})" if why else "") + ".")
+    for p in problems:
+        _note(state, "check_factchecks", f"Rejected by code: {p}")
+    new: list[dict] = []
+    rp["found"] = _search_more(state, ctx, queries, "AI re-plan query", new, seen_urls)
+    if not new:
+        _note(state, "check_factchecks", "The second attempt found nothing new. The verdict rests on the other checks.")
+    return new
 
 
 def _factcheck_candidates(state: dict, ctx: Context, claim: Claim, reviews: list[dict]) -> None:
@@ -513,7 +578,7 @@ def _factcheck_candidates(state: dict, ctx: Context, claim: Claim, reviews: list
     keep = []
     for c in cands:
         rv, cos = c.get("review") or {}, c.get("cosine", 0)
-        widened = bool(rv) and (str(rv.get("found_by", "")).startswith("AI query")
+        widened = bool(rv) and (str(rv.get("found_by", "")).startswith("AI ")
                                 or (rv.get("language") and claim.language and rv.get("language") != claim.language))
         if c["lexical"] >= FC_POSSIBLE or cos >= SEMANTIC_CANDIDATE:
             keep.append(c)
