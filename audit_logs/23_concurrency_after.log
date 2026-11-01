@@ -1,0 +1,26 @@
+### 2026-10-30T21:57:39Z concurrency AFTER fixes, 2 vCPU, default SATYAPAN_MAX_CONCURRENT_JOBS
+PASS  budget race: granted 20/40 (limit 20), file says 20, exceptions []
+PASS  8 concurrent investigations: 8/8 done, total 42.8 s, server peak RSS 873.2 MB
+    {'i': 0, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 42.8, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4254.4), ('sanitize_copy', 'LOCAL_SUCCESS', 198.7)], 'failed_tools': []}
+    {'i': 1, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 28.8, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4596.6), ('sanitize_copy', 'LOCAL_SUCCESS', 211.8)], 'failed_tools': []}
+    {'i': 2, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'running'], 's': 8.2, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 6441.9), ('sanitize_copy', 'LOCAL_SUCCESS', 415.7)], 'failed_tools': []}
+    {'i': 3, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 33.8, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4342.9), ('sanitize_copy', 'LOCAL_SUCCESS', 273.1)], 'failed_tools': []}
+    {'i': 4, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 13.8, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 5581.3), ('sanitize_copy', 'LOCAL_SUCCESS', 343.2)], 'failed_tools': []}
+    {'i': 5, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 24.0, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4512.7), ('sanitize_copy', 'LOCAL_SUCCESS', 210.3)], 'failed_tools': []}
+    {'i': 6, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 19.1, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4907.1), ('sanitize_copy', 'LOCAL_SUCCESS', 255.7)], 'failed_tools': []}
+    {'i': 7, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 38.1, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4149.8), ('sanitize_copy', 'LOCAL_SUCCESS', 356.7)], 'failed_tools': []}
+### 2026-10-30T21:58:40Z single job reference (same image), fresh server
+PASS  budget race: granted 20/40 (limit 20), file says 20, exceptions []
+PASS  1 concurrent investigations: 1/1 done, total 4.6 s, server peak RSS 347.5 MB
+    {'i': 0, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'running'], 's': 4.6, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4161.5), ('sanitize_copy', 'LOCAL_SUCCESS', 196.6)], 'failed_tools': []}
+### 2026-10-30T21:58:59Z 8 jobs again with MALLOC_ARENA_MAX=2 (glibc only, to test the arena hypothesis)
+PASS  budget race: granted 20/40 (limit 20), file says 20, exceptions []
+PASS  8 concurrent investigations: 8/8 done, total 40.8 s, server peak RSS 407.4 MB
+    {'i': 0, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 27.4, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4090.3), ('sanitize_copy', 'LOCAL_SUCCESS', 169.6)], 'failed_tools': []}
+    {'i': 1, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 18.8, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 5378.4), ('sanitize_copy', 'LOCAL_SUCCESS', 221.9)], 'failed_tools': []}
+    {'i': 2, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 36.3, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4178.3), ('sanitize_copy', 'LOCAL_SUCCESS', 210.4)], 'failed_tools': []}
+    {'i': 3, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 12.8, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 5447.6), ('sanitize_copy', 'LOCAL_SUCCESS', 179.1)], 'failed_tools': []}
+    {'i': 4, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 23.2, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4320.3), ('sanitize_copy', 'LOCAL_SUCCESS', 176.6)], 'failed_tools': []}
+    {'i': 5, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'running'], 's': 7.2, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 5730.6), ('sanitize_copy', 'LOCAL_SUCCESS', 355.6)], 'failed_tools': []}
+    {'i': 6, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 32.0, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4155.9), ('sanitize_copy', 'LOCAL_SUCCESS', 173.8)], 'failed_tools': []}
+    {'i': 7, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 40.8, 'verdict': 'UNVERIFIED', 'slowest': [('ocr_tesseract', 'LOCAL_SUCCESS', 4122.1), ('sanitize_copy', 'LOCAL_SUCCESS', 165.6)], 'failed_tools': []}

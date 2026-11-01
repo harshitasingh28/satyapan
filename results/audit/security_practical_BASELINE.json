@@ -1,0 +1,122 @@
+[
+ {
+  "area": "SSRF",
+  "test": "server made no request to itself via submitted links",
+  "pass": true,
+  "detail": "/health hits before 31, after 31"
+ },
+ {
+  "area": "SSRF",
+  "test": "unsafe links never passed to RDAP / Safe Browsing / urlscan",
+  "pass": true,
+  "detail": "[]"
+ },
+ {
+  "area": "Path traversal",
+  "test": "client filename not used as a path",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "Uploads",
+  "test": "oversized upload refused (413)",
+  "pass": true,
+  "detail": "HTTP 413 after 0.28 s (body fully sent before refusal: yes)"
+ },
+ {
+  "area": "Uploads",
+  "test": "huge Content-Length rejected before reading the body",
+  "pass": false,
+  "detail": "server kept the connection open, waiting for a declared 2 GB body (4 s timeout)"
+ },
+ {
+  "area": "Retention",
+  "test": "uploads are removed after processing or on a schedule",
+  "pass": false,
+  "detail": "4 uploaded files still on disk, sweep is never scheduled by the app"
+ },
+ {
+  "area": "Retention",
+  "test": "investigation records (contain user text) expire",
+  "pass": false,
+  "detail": "18 investigation JSON files kept indefinitely. Store.sweep() does not cover them"
+ },
+ {
+  "area": "Uploads",
+  "test": "60 MP image rejected (configured limit 40 MP)",
+  "pass": false,
+  "detail": "ok=True errors=[] size=7354 bytes"
+ },
+ {
+  "area": "Uploads",
+  "test": "random bytes with an MP4 header rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "Uploads",
+  "test": "corrupt WAV rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "Uploads",
+  "test": "MP4 with no video stream handled (rejected as video or accepted as audio)",
+  "pass": true,
+  "detail": "kind=video ok=False errors=['no video stream']"
+ },
+ {
+  "area": "Uploads",
+  "test": "JPEG with appended payload (polyglot) noted",
+  "pass": true,
+  "detail": "accepted=True. Not executed, and re-encoded before any third-party upload"
+ },
+ {
+  "area": "URL schemes",
+  "test": "javascript rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "URL schemes",
+  "test": "data rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "URL schemes",
+  "test": "file rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "URL schemes",
+  "test": "vbscript rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "URL schemes",
+  "test": "jar rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "Injection",
+  "test": "crafted host gives a safe RDAP domain: http://evil%2F..%2Fadmin.com/",
+  "pass": false,
+  "detail": "registered='%2fadmin.com'"
+ },
+ {
+  "area": "Injection",
+  "test": "crafted host gives a safe RDAP domain: http://a.b.com%23frag/",
+  "pass": false,
+  "detail": "registered='a.b.com%23frag'"
+ },
+ {
+  "area": "Injection",
+  "test": "crafted host gives a safe RDAP domain: http://x.com\\@pib.gov.in/",
+  "pass": true,
+  "detail": "registered='pib.gov.in'"
+ }
+]

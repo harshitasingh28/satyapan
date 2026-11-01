@@ -1,0 +1,21 @@
+### 2026-10-30T22:47:02Z independent probes X1-X3 on the ORIGINAL code
+code under test: /tmp/claude-0/prefix_full
+PASS  X1 verdict=UNVERIFIED acceptable=['FAKE', 'UNVERIFIED']  release title, filler past 5,000 characters, then a scam link
+        pib_release_index neutral/none: A related official release exists: 'FIXTURE PM Kisan 21st instalment of Rs 2000 released to farmers'. It does 
+FAIL  X2 verdict=GENUINE    acceptable=['UNVERIFIED']  Rs 5 crore in the message, Rs 5 lakh in the release
+        pib_release_index supports/strong: An official PIB release matches the claim (92% of claim terms, amounts consistent, links official): 'FIXTURE A
+        url_analysis supports/weak: pmjay.gov.in is an official government domain (gov.in/nic.in).
+FAIL  X3 verdict=GENUINE    acceptable=['FAKE', 'UNVERIFIED']  unencoded open redirect on uidai.gov.in plus a matching release
+        pib_release_index supports/strong: An official PIB release matches the claim (100% of claim terms, amounts consistent, links official): 'FIXTURE 
+        url_analysis supports/weak: uidai.gov.in is an official government domain (gov.in/nic.in).
+### 2026-10-30T22:47:03Z same probes on the FIXED code
+code under test: /tmp/claude-0/audit/src/satyapan-feasibility
+PASS  X1 verdict=FAKE       acceptable=['FAKE', 'UNVERIFIED']  release title, filler past 5,000 characters, then a scam link
+        pib_release_index neutral/none: A related official release exists: 'FIXTURE PM Kisan 21st instalment of Rs 2000 released to farmers'. It does 
+        url_analysis contradicts/strong: The message invokes government, government of india, pm kisan but links to ekyc-verify.top, which is not an of
+PASS  X2 verdict=UNVERIFIED acceptable=['UNVERIFIED']  Rs 5 crore in the message, Rs 5 lakh in the release
+        pib_release_index neutral/none: A related official release exists: 'FIXTURE Ayushman Bharat PM-JAY health cover of Rs 5 lakh per family extend
+        url_analysis supports/weak: pmjay.gov.in is an official government domain (gov.in/nic.in).
+PASS  X3 verdict=UNVERIFIED acceptable=['FAKE', 'UNVERIFIED']  unencoded open redirect on uidai.gov.in plus a matching release
+        pib_release_index neutral/none: A related official release exists: 'FIXTURE UIDAI extends free online Aadhaar document update facility till 14
+        url_analysis contradicts/moderate: The link starts on uidai.gov.in but carries a redirect to aadhaar-docs-update.top, which is a different site.

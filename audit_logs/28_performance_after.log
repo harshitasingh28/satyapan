@@ -1,0 +1,9 @@
+### 2026-10-30T22:06:01Z performance AFTER fixes + JPEG draft decode for OCR downscale, 2 vCPU
+text_scam          file None MB  pipeline 0.334 s  cpu 1.12 s  peak RSS 187.4 MB  verdict UNVERIFIED  slowest [['rdap', 'BLOCKED', 253.7], ['url_analysis', 'LOCAL_SUCCESS', 78.7], ['pib_release_index', 'LOCAL_SUCCESS', 0.2]]
+image_1mp          file 0.17 MB  pipeline 1.017 s  cpu 1.074 s  peak RSS 187.5 MB  verdict UNVERIFIED  slowest [['ocr_tesseract', 'LOCAL_SUCCESS', 1004.6], ['c2pa', 'LOCAL_SUCCESS', 3.8], ['factcheck_search', 'SKIPPED_NOT_APPLICABLE', 0.0]]
+image_12mp         file 0.9 MB  pipeline 4.187 s  cpu 2.069 s  peak RSS 329.8 MB  verdict UNVERIFIED  slowest [['ocr_tesseract', 'LOCAL_SUCCESS', 4127.0], ['c2pa', 'LOCAL_SUCCESS', 5.6], ['factcheck_search', 'SKIPPED_NOT_APPLICABLE', 0.0]]
+image_39mp         file 2.12 MB  pipeline 4.257 s  cpu 2.081 s  peak RSS 327.1 MB  verdict UNVERIFIED  slowest [['ocr_tesseract', 'LOCAL_SUCCESS', 4096.5], ['c2pa', 'LOCAL_SUCCESS', 5.0], ['factcheck_search', 'SKIPPED_NOT_APPLICABLE', 0.0]]
+video_60s_720p     file 11.8 MB  pipeline 4.643 s  cpu 1.004 s  peak RSS 188.7 MB  verdict UNVERIFIED  slowest [['video_keyframes', 'LOCAL_SUCCESS', 4554.1], ['c2pa', 'LOCAL_SUCCESS', 4.2], ['factcheck_search', 'SKIPPED_NOT_APPLICABLE', 0.0]]
+video_180s_1080p   file 35.48 MB  pipeline 21.003 s  cpu 1.068 s  peak RSS 211.2 MB  verdict UNVERIFIED  slowest [['video_keyframes', 'LOCAL_SUCCESS', 20864.8], ['c2pa', 'LOCAL_SUCCESS', 4.1], ['factcheck_search', 'SKIPPED_NOT_APPLICABLE', 0.0]]
+audio_180s         file 0.87 MB  pipeline 0.055 s  cpu 1.013 s  peak RSS 187.5 MB  verdict UNVERIFIED  slowest [['factcheck_search', 'SKIPPED_NOT_APPLICABLE', 0.0]]
+saved results/audit/performance_AFTER.json

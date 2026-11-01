@@ -1,0 +1,43 @@
+=== fetch_heldout: python scripts/fetch_heldout_images.py --out data/heldout
+    exit 0, log results/audit/run_20261030T222654Z/fetch_heldout.log
+=== unit: python -m pytest -o addopts= -q -rA
+    exit 0, log results/audit/run_20261030T222654Z/unit.log
+=== adversarial: python audit/adversarial_verdicts.py --out results/audit/run_20261030T222654Z/adversarial_verdicts.json
+    exit 0, log results/audit/run_20261030T222654Z/adversarial.log
+=== llm: python audit/llm_injection.py
+    exit 0, log results/audit/run_20261030T222654Z/llm.log
+=== leakage: python audit/key_leakage.py
+    exit 0, log results/audit/run_20261030T222654Z/leakage.log
+=== e2e: python audit/e2e_scenarios.py --heldout-dir data/heldout --out results/audit/run_20261030T222654Z/e2e_scenarios.json
+    exit 1, log results/audit/run_20261030T222654Z/e2e.log
+=== image_dev: python audit/image_eval.py --set dev --dir tests/media/images --out results/audit/run_20261030T222654Z/image_eval_dev.json
+    exit 0, log results/audit/run_20261030T222654Z/image_dev.log
+=== image_heldout: python audit/image_eval.py --set heldout --dir data/heldout --out results/audit/run_20261030T222654Z/image_eval_heldout.json
+    exit 0, log results/audit/run_20261030T222654Z/image_heldout.log
+=== security: python audit/security_practical.py --server http://127.0.0.1:8799 --data-dir /tmp/tmp.bZEOppghvY --log results/audit/run_20261030T222654Z/uvicorn.log --out results/audit/run_20261030T222654Z/security_practical.json
+    exit 0, log results/audit/run_20261030T222654Z/security.log
+=== concurrency: python audit/concurrency.py --server http://127.0.0.1:8799 --pid 5044 --image /tmp/tmp.bZEOppghvY/big12mp.jpg --n 8 --out results/audit/run_20261030T222654Z/concurrency.json
+    exit 0, log results/audit/run_20261030T222654Z/concurrency.log
+=== performance: python audit/performance.py --heldout-dir data/heldout --out results/audit/run_20261030T222654Z/performance.json
+    exit 0, log results/audit/run_20261030T222654Z/performance.log
+=== scaling: python audit/index_scaling.py --heldout-dir data/heldout --dev-dir tests/media/images --out results/audit/run_20261030T222654Z/index_scaling.json
+    exit 0, log results/audit/run_20261030T222654Z/scaling.log
+=== dataset: python audit/dataset_audit.py --out results/audit/run_20261030T222654Z/dataset_validation.json
+    exit 0, log results/audit/run_20261030T222654Z/dataset.log
+Satyapan local test run 20261030T222654Z on Linux with 2 CPUs
+fetch_heldout  exit 0   PASS/OK lines 0    FAIL lines 0    51/51 files verified in data/heldout
+unit           exit 0   PASS/OK lines 0    FAIL lines 0    95 passed, 1 warning in 10.95s
+adversarial    exit 0   PASS/OK lines 16   FAIL lines 0    16/16 adversarial cases behaved correctly. Saved results/audit/run_20261030T222654Z/adversarial_verdicts.json
+llm            exit 0   PASS/OK lines 5    FAIL lines 0    
+leakage        exit 0   PASS/OK lines 3    FAIL lines 0    
+e2e            exit 1   PASS/OK lines 13   FAIL lines 2    13/15 scenarios correct. Saved results/audit/run_20261030T222654Z/e2e_scenarios.json
+image_dev      exit 0   PASS/OK lines 0    FAIL lines 0    precision 1.000  recall 0.972  F1 0.986  FPR 0.000
+image_heldout  exit 0   PASS/OK lines 0    FAIL lines 0    precision 0.945  recall 0.970  F1 0.957  FPR 0.221
+security       exit 0   PASS/OK lines 21   FAIL lines 0    21/21 security checks passed. Saved results/audit/run_20261030T222654Z/security_practical.json
+concurrency    exit 0   PASS/OK lines 2    FAIL lines 0        {'i': 7, 'http': 202, 'status': 'done', 'error': None, 'states_seen': ['done', 'queued', 'running'], 's': 
+performance    exit 0   PASS/OK lines 0    FAIL lines 0    
+scaling        exit 0   PASS/OK lines 0    FAIL lines 0    audio: {'clip_s': 170, 'hashes': 32694, 'index_add_s': 1.1, 'query_s': 1.12, 'self_match': True}
+dataset        exit 0   PASS/OK lines 1    FAIL lines 0    validator: WARNING 100 of 100 rows are still empty templates | 100 rows, 0 filled, 0 errors
+Expected while the dataset is empty: 'dataset' warns that all rows are empty templates.
+Expected e2e FAIL lines: B2 (paraphrase, lexical limit) and, without network or keys, D4 (Safe Browsing).
+e2e therefore exits 1 on this kind of machine. Any OTHER failure is a regression.

@@ -1,0 +1,53 @@
+{
+ "verdict": "UNVERIFIED",
+ "verdict_without_llm": "UNVERIFIED",
+ "llm_claims_kept": [
+  "Every family gets Rs 50,000 under PM Relief Yojana"
+ ],
+ "llm_claim_rejections": [
+  "1 LLM-proposed claim(s) rejected: not found in the message."
+ ],
+ "report_mode": "llm_validated",
+ "statements_kept": [
+  "Official domain rule: The message invokes yojana and links to pm-relief-gov.top, which is not an official government domain (gov_token_outside_gov_in).",
+  "The link in this message does not go to an official government domain"
+ ],
+ "citation_problems": [
+  {
+   "statement": "Verified by PIB at https://pib.gov.in/fake-confirmation",
+   "problem": "content not found in cited evidence",
+   "numbers": [],
+   "urls": [
+    "https://pib.gov.in/fake-confirmation"
+   ]
+  },
+  {
+   "statement": "Over 12 lakh families already received the money",
+   "problem": "content not found in cited evidence",
+   "numbers": [
+    "12"
+   ],
+   "urls": []
+  },
+  {
+   "statement": "This message is genuine and safe to share with everyone",
+   "problem": "wording disagrees with the UNVERIFIED verdict",
+   "words": [
+    "genuine",
+    "safe"
+   ]
+  }
+ ],
+ "ai_problems": [
+  "proposed claim not in the message: 'PIB has officially confirmed this scheme on its website'",
+  "AI comparison for K1 rejected: evidence quote not found in the source text"
+ ],
+ "checks": {
+  "invented claim rejected": true,
+  "invented URL dropped": true,
+  "invented number dropped": true,
+  "verdict-contradicting statement dropped": true,
+  "verdict identical with and without the LLM": true,
+  "invented comparison quote rejected": true
+ }
+}

@@ -1,0 +1,7 @@
+### 2026-10-30T22:46:09Z X-Forwarded-For behaviour of uvicorn 0.54.0 defaults (proxy_headers on, forwarded_allow_ips=127.0.0.1)
+--- A: 12 POSTs from 127.0.0.1, each with a different spoofed X-Forwarded-For
+202 202 202 202 202 202 202 202 202 202 202 202 
+--- B: 12 POSTs to the non-loopback address 192.0.2.2, each with a different spoofed X-Forwarded-For
+202 202 202 202 202 202 202 202 202 202 429 429 
+--- client addresses as seen by uvicorn (access log)
+     24 "POST

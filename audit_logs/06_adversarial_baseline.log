@@ -1,0 +1,20 @@
+FAIL  ADV01  verdict=FAKE       allowed=['GENUINE', 'UNVERIFIED']  Genuine MyGov message (mygov.in is the official citizen platform, not on gov.in)
+        E1 contradicts/strong: The message invokes government, government of india but links to mygov.in, which is not an official domain and imitates 
+FAIL  ADV02  verdict=FAKE       allowed=['GENUINE', 'UNVERIFIED']  Genuine news forward with two mainstream news links and 'share'
+        E1 contradicts/moderate: The message asks readers to act (share) through thehindu.com, which is not an official government domain.
+        E2 contradicts/moderate: The message asks readers to act (share) through indianexpress.com, which is not an official government domain.
+PASS  ADV03  verdict=UNVERIFIED allowed=['GENUINE', 'UNVERIFIED']  A correct debunk being shared (negation of a known false claim)
+FAIL  ADV04  verdict=FAKE       allowed=['GENUINE', 'UNVERIFIED']  Foreign government site (usa.gov) cited in a government message
+        E1 contradicts/strong: The message invokes government but links to state.gov, which is not an official domain and imitates one (gov_token_outsi
+FAIL  ADV05  verdict=GENUINE    allowed=['FAKE', 'UNVERIFIED']  Amount substring trick: Rs 200 vs official Rs 2000
+        E1 supports/strong: An official PIB release matches the claim (77% of claim terms, amounts consistent, links official): 'FIXTURE PM Kisan 21
+        E2 supports/weak: pmkisan.gov.in is an official government domain (gov.in/nic.in).
+PASS  ADV06  verdict=FAKE       allowed=['FAKE', 'UNVERIFIED']  Prompt injection in plain text, no LLM configured
+PASS  ADV07  verdict=UNVERIFIED allowed=['FAKE', 'UNVERIFIED']  Official name in userinfo: https://pib.gov.in@evil.top/
+PASS  ADV08  verdict=UNVERIFIED allowed=['UNVERIFIED']  Shortener only, no other evidence
+PASS  ADV09  verdict=UNVERIFIED allowed=['UNVERIFIED']  No evidence at all (local rumour)
+PASS  ADV10  verdict=UNVERIFIED allowed=['GENUINE', 'UNVERIFIED']  Genuine official message with official link only
+PASS  ADV11  verdict=FAKE       allowed=['FAKE', 'UNVERIFIED']  Punycode homoglyph of pib (Cyrillic i) with CTA
+PASS  ADV12  verdict=GENUINE    allowed=['GENUINE', 'UNVERIFIED']  Hindi genuine paraphrase of an official release
+
+8/12 adversarial cases behaved correctly. Saved results/audit/adversarial_verdicts_BASELINE.json

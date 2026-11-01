@@ -1,0 +1,16 @@
+### 2026-10-30T21:57:03Z key leakage AFTER fixes (echoing mock transport)
+PASS  key_in_report: False
+PASS  key_in_call_records: False
+PASS  key_in_logs: False
+    ('factcheck_search', 'SERVICE_ERROR', 'bad request for https://factchecktools.googleapis.com/v1alpha1/claims:search?pageSize=10&query=PIB%3A+free+laptops+for+students%2C+register+at&languageCode=en&k')
+    ('rdap', 'SERVICE_ERROR', 'bootstrap HTTP 400')
+    ('safe_browsing', 'SERVICE_ERROR', 'bad request for https://safebrowsing.googleapis.com/v4/threatMatches:find?key=REDACTED body={"client":{"clientId":"satyapan","clientVersion":"0.2"},"threatInfo"')
+    ('urlscan', 'SKIPPED_CONSENT', 'background sandbox scan not requested')
+### same script on the ORIGINAL code
+FAIL  key_in_report: True
+PASS  key_in_call_records: False
+PASS  key_in_logs: False
+    ('factcheck_search', 'SERVICE_ERROR', 'bad request for https://factchecktools.googleapis.com/v1alpha1/claims:search?pageSize=10&query=PIB%3A+free+laptops+for+students%2C+register+at&languageCode=en&k')
+    ('rdap', 'SERVICE_ERROR', 'bootstrap HTTP 400')
+    ('safe_browsing', 'SERVICE_ERROR', 'bad request for https://safebrowsing.googleapis.com/v4/threatMatches:find?key=AUDITKEY1234567890abcdef body={"client":{"clientId":"satyapan","clientVersion":"0.')
+    ('urlscan', 'SKIPPED_CONSENT', 'background sandbox scan not requested')

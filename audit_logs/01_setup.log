@@ -1,0 +1,43 @@
+### setup 21:21:59Z (setup_macos.sh steps minus brew)
+Python 3.12.3
+
+real	0m16.547s
+user	0m6.348s
+sys	0m0.922s
+
+real	0m4.357s
+user	0m1.950s
+sys	0m0.235s
+### pip check
+No broken requirements found.
+### key versions
+fastapi                0.162.0
+feedparser             6.0.14
+httpx                  0.28.1
+ImageHash              4.3.2
+langgraph              1.2.18
+numpy                  2.5.4
+pillow                 13.0.0
+pytest                 9.2.0
+python-multipart       0.0.32
+RapidFuzz              3.14.6
+scikit-image           0.26.0
+scipy                  1.18.1
+starlette              1.10.0
+tldextract             5.4.0
+uvicorn                0.54.0
+downloaded c2pa/C.jpg (137886 bytes)
+downloaded c2pa/A.jpg (61720 bytes)
+downloaded audio/speech_a.ogg (69112 bytes)
+downloaded audio/speech_b.ogg (82670 bytes)
+downloaded audio/music.ogg (1452719 bytes)
+downloaded tessdata/hin.traineddata (1122751 bytes)
+downloaded tessdata/tel.traineddata (2769654 bytes)
+downloaded tessdata/eng.traineddata (4113088 bytes)
+downloaded fonts/NotoSansDevanagari.ttf (641944 bytes)
+downloaded fonts/NotoSansTelugu.ttf (888808 bytes)
+copied 17 sample photos
+
+real	0m2.530s
+user	0m0.140s
+sys	0m0.043s

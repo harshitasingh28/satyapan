@@ -1,0 +1,272 @@
+{
+ "set": "heldout",
+ "thresholds_frozen": {
+  "MIN_INLIERS": 25,
+  "MIN_INLIER_RATIO": 0.3,
+  "MIN_SPREAD": 0.1,
+  "MAX_ANISOTROPY": 3.0,
+  "CROP_SCALES": [
+   1.0,
+   0.9,
+   0.8
+  ]
+ },
+ "indexed": 22,
+ "positive_queries": 265,
+ "negative_queries": 68,
+ "TP": 257,
+ "FN": 8,
+ "wrong_attributions": 0,
+ "FP_on_negatives": 15,
+ "FP_total": 15,
+ "TN": 53,
+ "precision": 0.945,
+ "recall": 0.97,
+ "f1": 0.957,
+ "fpr": 0.221,
+ "per_transform_recall": {
+  "original": 1.0,
+  "resize50": 1.0,
+  "jpeg30": 1.0,
+  "centre_crop70": 1.0,
+  "offcentre_crop55_br": 0.727,
+  "screenshot_v2": 1.0,
+  "watermark_tiled": 1.0,
+  "blur2.5": 1.0,
+  "rotate7": 1.0,
+  "rotate15": 1.0,
+  "combo_screenshot_resize60_jpeg50": 0.909,
+  "mirror": 1.0,
+  "natural_crop": 1.0
+ },
+ "per_transform_counts": {
+  "original": {
+   "TP": 22,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "resize50": {
+   "TP": 22,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "jpeg30": {
+   "TP": 22,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "centre_crop70": {
+   "TP": 22,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "offcentre_crop55_br": {
+   "TP": 16,
+   "FN": 6,
+   "WRONG": 0
+  },
+  "screenshot_v2": {
+   "TP": 22,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "watermark_tiled": {
+   "TP": 22,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "blur2.5": {
+   "TP": 22,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "rotate7": {
+   "TP": 22,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "rotate15": {
+   "TP": 22,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "combo_screenshot_resize60_jpeg50": {
+   "TP": 20,
+   "FN": 2,
+   "WRONG": 0
+  },
+  "mirror": {
+   "TP": 22,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "natural_crop": {
+   "TP": 1,
+   "FN": 0,
+   "WRONG": 0
+  }
+ },
+ "negatives": {
+  "hard_negatives": {
+   "TN": 21,
+   "FP": 15
+  },
+  "easy_negatives": {
+   "TN": 32,
+   "FP": 0
+  }
+ },
+ "false_positives": [
+  [
+   "graf3.png",
+   "original",
+   "graf1.png",
+   "orb",
+   65
+  ],
+  [
+   "graf3.png",
+   "resize50",
+   "graf1.png",
+   "orb",
+   29
+  ],
+  [
+   "graf3.png",
+   "jpeg30",
+   "graf1.png",
+   "orb",
+   67
+  ],
+  [
+   "graf3.png",
+   "screenshot_v2",
+   "graf1.png",
+   "orb",
+   53
+  ],
+  [
+   "left04.jpg",
+   "original",
+   "left01.jpg",
+   "phash",
+   0
+  ],
+  [
+   "left04.jpg",
+   "resize50",
+   "left01.jpg",
+   "phash",
+   0
+  ],
+  [
+   "left05.jpg",
+   "original",
+   "left01.jpg",
+   "phash",
+   0
+  ],
+  [
+   "left05.jpg",
+   "resize50",
+   "left01.jpg",
+   "phash",
+   0
+  ],
+  [
+   "left05.jpg",
+   "jpeg30",
+   "left01.jpg",
+   "phash",
+   0
+  ],
+  [
+   "left07.jpg",
+   "original",
+   "left01.jpg",
+   "phash",
+   0
+  ],
+  [
+   "left07.jpg",
+   "jpeg30",
+   "left01.jpg",
+   "phash",
+   0
+  ],
+  [
+   "Blender_Suzanne2.jpg",
+   "original",
+   "Blender_Suzanne1.jpg",
+   "orb",
+   92
+  ],
+  [
+   "Blender_Suzanne2.jpg",
+   "resize50",
+   "Blender_Suzanne1.jpg",
+   "orb",
+   178
+  ],
+  [
+   "Blender_Suzanne2.jpg",
+   "jpeg30",
+   "Blender_Suzanne1.jpg",
+   "orb",
+   68
+  ],
+  [
+   "Blender_Suzanne2.jpg",
+   "screenshot_v2",
+   "Blender_Suzanne1.jpg",
+   "orb",
+   72
+  ]
+ ],
+ "misses": [
+  [
+   "lena.jpg",
+   "offcentre_crop55_br",
+   null
+  ],
+  [
+   "apple.jpg",
+   "offcentre_crop55_br",
+   null
+  ],
+  [
+   "apple.jpg",
+   "combo_screenshot_resize60_jpeg50",
+   null
+  ],
+  [
+   "baboon.jpg",
+   "offcentre_crop55_br",
+   null
+  ],
+  [
+   "stuff.jpg",
+   "offcentre_crop55_br",
+   null
+  ],
+  [
+   "left01.jpg",
+   "offcentre_crop55_br",
+   null
+  ],
+  [
+   "left01.jpg",
+   "combo_screenshot_resize60_jpeg50",
+   null
+  ],
+  [
+   "licenseplate_motion.jpg",
+   "offcentre_crop55_br",
+   null
+  ]
+ ],
+ "excluded": "basketball1/2 and rubberwhale1/2 are consecutive video frames (label ambiguous), box.png is a different photo of an object inside box_in_scene, synthetic masks and gradients",
+ "index_build_s": 0.64,
+ "query_ms_p50": 100.1,
+ "query_ms_p95": 328.2
+}

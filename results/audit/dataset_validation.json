@@ -1,0 +1,38 @@
+{
+ "claim_manifest": "eval/manifest_template.csv",
+ "detector_manifest": "eval/detector_manifest_template.csv",
+ "claim_rows": 100,
+ "claim_rows_filled": 0,
+ "detector_rows": 120,
+ "detector_rows_filled": 0,
+ "plan_totals": {
+  "dev": 30,
+  "test": 70,
+  "all": 100
+ },
+ "plan_sum_dev": 30,
+ "plan_sum_test": 70,
+ "plan_test_truth": {
+  "TRUE": 21,
+  "FALSE": 46,
+  "UNRESOLVED": 3
+ },
+ "abstain_by_design": [
+  "M"
+ ],
+ "detector_split_label": {
+  "dev/ai": 20,
+  "dev/real": 20,
+  "test/ai": 40,
+  "test/real": 40
+ },
+ "validator_exit": 0,
+ "validator_output": [
+  "WARNING 100 of 100 rows are still empty templates",
+  "100 rows, 0 filled, 0 errors"
+ ],
+ "near_duplicate_probe": [
+  "LEAKAGE (possible near-duplicate image, review): test T matches dev D (phash+orb)"
+ ],
+ "near_duplicate_leak_detected": true
+}

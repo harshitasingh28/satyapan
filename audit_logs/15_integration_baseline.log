@@ -1,0 +1,35 @@
+### 2026-10-30T21:38:57Z integration run A: no keys
+AUTH_REQUIRED  factcheck_search              0.0 ms  google_api_key not configured in .env, request not sent
+AUTH_REQUIRED  factcheck_image_search        0.0 ms  google_api_key not configured in .env, request not sent
+AUTH_REQUIRED  safe_browsing_v5              0.0 ms  google_api_key not configured in .env, request not sent
+AUTH_REQUIRED  safe_browsing_v4              0.0 ms  google_api_key not configured in .env, request not sent
+BLOCKED        rdap_bootstrap             2475.1 ms  network: 403 Forbidden
+BLOCKED        rdap_domain                2560.8 ms  network: 403 Forbidden
+BLOCKED        wikidata_sparql            2493.3 ms  network: 403 Forbidden
+BLOCKED        pib_rss                    7526.0 ms  all PIB feeds failed
+AUTH_REQUIRED  urlscan_quotas                0.0 ms  urlscan_api_key not configured in .env, request not sent
+NOT_TESTED     urlscan_scan                  0.0 ms  sends data to a third party: rerun with --allow-third-party
+NOT_TESTED     sightengine_genai             0.0 ms  sends data to a third party: rerun with --allow-third-party
+NOT_TESTED     cloud_vision_web              0.0 ms  sends data to a third party: rerun with --allow-third-party
+NOT_TESTED     llm_claim_extraction          0.0 ms  sends data to a third party: rerun with --allow-third-party
+
+wrote /tmp/claude-0/audit/src/satyapan-feasibility/integration_results/SUMMARY_no_keys.md
+### 2026-10-30T21:39:12Z integration run B: placeholder keys + --allow-third-party (requests really sent)
+BLOCKED        factcheck_search           2554.5 ms  network: 403 Forbidden
+BLOCKED        factcheck_image_search     2396.8 ms  network: 403 Forbidden
+BLOCKED        safe_browsing_v5           2519.4 ms  network: 403 Forbidden
+BLOCKED        safe_browsing_v4           2542.1 ms  network: 403 Forbidden
+BLOCKED        rdap_bootstrap             2520.7 ms  network: 403 Forbidden
+BLOCKED        rdap_domain                2473.7 ms  network: 403 Forbidden
+BLOCKED        wikidata_sparql            2291.6 ms  network: 403 Forbidden
+BLOCKED        pib_rss                    7441.5 ms  all PIB feeds failed
+BLOCKED        urlscan_quotas             2520.0 ms  network: 403 Forbidden
+BLOCKED        urlscan_scan               2480.9 ms  network: 403 Forbidden
+BLOCKED        sightengine_genai          2535.0 ms  network: 403 Forbidden
+AUTH_REQUIRED  cloud_vision_web              0.0 ms  vision not configured in .env, request not sent
+AUTH_REQUIRED  llm_claim_extraction          0.0 ms  llm not configured in .env, request not sent
+
+wrote /tmp/claude-0/audit/src/satyapan-feasibility/integration_results/SUMMARY_placeholder_keys.md
+### proxy evidence: what the workspace egress proxy returns
+factchecktools via proxy: HTTP 000
+proxy enabled: True | recent failures: 20

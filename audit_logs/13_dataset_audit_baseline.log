@@ -1,0 +1,11 @@
+### dataset audit 21:35:55Z
+--- claim manifest template vs plan
+WARNING 100 of 100 rows are still empty templates
+100 rows, 0 filled, 0 errors
+rows: 100 | filled with a source URL: 0
+plan totals dev/test: {'dev': 30, 'test': 70} declared: {'dev': 30, 'test': 70, 'all': 100}
+test truth counts: Counter({'FALSE': 46, 'TRUE': 21, 'UNRESOLVED': 3})
+expected verdict for M is UNVERIFIED while ground truth is FALSE (design choice: abstain allowed)
+detector rows: 120 Counter({('test', 'ai'): 40, ('test', 'real'): 40, ('dev', 'ai'): 20, ('dev', 'real'): 20}) | filled: 0
+--- does the validator detect NEAR-duplicate images across splits? (resized copy in dev and test)
+validator errors: none -> near-duplicate leak NOT detected

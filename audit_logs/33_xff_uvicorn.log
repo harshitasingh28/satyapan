@@ -1,0 +1,40 @@
+INFO:     Started server process [6053]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8811 (Press CTRL+C to quit)
+INFO:     10.9.9.1:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     10.9.9.2:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     10.9.9.3:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     10.9.9.4:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     10.9.9.5:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+{"ts": "2026-10-30T22:46:09", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "52639355c21e", "verdict": "UNVERIFIED"}}
+INFO:     10.9.9.6:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     10.9.9.7:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     10.9.9.8:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+{"ts": "2026-10-30T22:46:09", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "3ba844d2a24d", "verdict": "UNVERIFIED"}}
+INFO:     10.9.9.9:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     10.9.9.10:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     10.9.9.11:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     10.9.9.12:0 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+{"ts": "2026-10-30T22:46:09", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "25dcefe83006", "verdict": "UNVERIFIED"}}
+INFO:     192.0.2.2:44878 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     192.0.2.2:44892 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     192.0.2.2:44898 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+{"ts": "2026-10-30T22:46:10", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "98066c0351a3", "verdict": "UNVERIFIED"}}
+INFO:     192.0.2.2:44914 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     192.0.2.2:44930 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     192.0.2.2:44936 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     192.0.2.2:44938 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     192.0.2.2:44954 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+{"ts": "2026-10-30T22:46:10", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "03b5798c8de5", "verdict": "UNVERIFIED"}}
+INFO:     192.0.2.2:44962 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     192.0.2.2:44976 - "POST /v1/investigations HTTP/1.1" 202 Accepted
+INFO:     192.0.2.2:44982 - "POST /v1/investigations HTTP/1.1" 429 Too Many Requests
+INFO:     192.0.2.2:44998 - "POST /v1/investigations HTTP/1.1" 429 Too Many Requests
+INFO:     Shutting down
+{"ts": "2026-10-30T22:46:10", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "142e44ab1697", "verdict": "UNVERIFIED"}}
+{"ts": "2026-10-30T22:46:10", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "7deb4050df26", "verdict": "UNVERIFIED"}}
+{"ts": "2026-10-30T22:46:10", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "2be5f1ccc9c0", "verdict": "UNVERIFIED"}}
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [6053]

@@ -1,0 +1,33 @@
+{
+ "test": "factcheck_image_search",
+ "run_at": "2026-10-30T21:39:15+00:00",
+ "host": "vm",
+ "status": "BLOCKED",
+ "request_sent": true,
+ "genuine_external": false,
+ "error": "network: 403 Forbidden",
+ "http_status": null,
+ "elapsed_ms": 2396.8,
+ "calls": [
+  {
+   "tool": "factcheck_image_search",
+   "method": "GET",
+   "url": "https://factchecktools.googleapis.com/v1alpha1/claims:imageSearch?imageUri=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fa%2Fa9%2FExample.jpg&key=REDACTED",
+   "http_status": null,
+   "ms": 243.5,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "factcheck_image_search",
+   "method": "GET",
+   "url": "https://factchecktools.googleapis.com/v1alpha1/claims:imageSearch?imageUri=https%3A%2F%2Fupload.wikimedia.org%2Fwikipedia%2Fcommons%2Fa%2Fa9%2FExample.jpg&key=REDACTED",
+   "http_status": null,
+   "ms": 152.6,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  }
+ ]
+}

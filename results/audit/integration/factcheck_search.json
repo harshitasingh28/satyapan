@@ -1,0 +1,33 @@
+{
+ "test": "factcheck_search",
+ "run_at": "2026-10-30T21:39:13+00:00",
+ "host": "vm",
+ "status": "BLOCKED",
+ "request_sent": true,
+ "genuine_external": false,
+ "error": "network: 403 Forbidden",
+ "http_status": null,
+ "elapsed_ms": 2554.5,
+ "calls": [
+  {
+   "tool": "factcheck_search",
+   "method": "GET",
+   "url": "https://factchecktools.googleapis.com/v1alpha1/claims:search?pageSize=5&query=free+laptop+scheme+government+students&key=REDACTED",
+   "http_status": null,
+   "ms": 269.0,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "factcheck_search",
+   "method": "GET",
+   "url": "https://factchecktools.googleapis.com/v1alpha1/claims:search?pageSize=5&query=free+laptop+scheme+government+students&key=REDACTED",
+   "http_status": null,
+   "ms": 284.8,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  }
+ ]
+}

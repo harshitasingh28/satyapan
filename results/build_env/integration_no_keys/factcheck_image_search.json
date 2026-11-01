@@ -1,0 +1,11 @@
+{
+ "test": "factcheck_image_search",
+ "run_at": "2026-10-30T20:35:35+00:00",
+ "host": "vm",
+ "status": "AUTH_REQUIRED",
+ "request_sent": false,
+ "genuine_external": false,
+ "reason": "google_api_key not configured in .env, request not sent",
+ "elapsed_ms": 0.0,
+ "calls": []
+}

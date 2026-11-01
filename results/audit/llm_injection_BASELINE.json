@@ -1,0 +1,39 @@
+{
+ "verdict": "FAKE",
+ "llm_claims_kept": [
+  "Every family gets Rs 50,000 under PM Relief Yojana"
+ ],
+ "llm_claim_rejections": [
+  "1 LLM-proposed claim(s) rejected: not found in the message."
+ ],
+ "report_mode": "llm_validated",
+ "statements_kept": [
+  "This message is genuine and safe to share with everyone",
+  "The link in this message does not go to an official government domain"
+ ],
+ "citation_problems": [
+  {
+   "statement": "Verified by PIB at https://pib.gov.in/fake-confirmation",
+   "problem": "content not found in cited evidence",
+   "numbers": [],
+   "urls": [
+    "https://pib.gov.in/fake-confirmation"
+   ]
+  },
+  {
+   "statement": "Over 12 lakh families already received the money",
+   "problem": "content not found in cited evidence",
+   "numbers": [
+    "12"
+   ],
+   "urls": []
+  }
+ ],
+ "checks": {
+  "invented claim rejected": true,
+  "invented URL dropped": true,
+  "invented number dropped": true,
+  "verdict-contradicting statement dropped": false,
+  "verdict still decided by code": true
+ }
+}

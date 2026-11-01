@@ -1,0 +1,44 @@
+{
+ "budget_race": {
+  "attempts": 40,
+  "limit": 20,
+  "granted": 20,
+  "exceptions": [],
+  "file_count": 20,
+  "pass": true
+ },
+ "server": {
+  "n": 1,
+  "total_s": 4.6,
+  "done": 1,
+  "server_peak_rss_mb": 347.5,
+  "jobs": [
+   {
+    "i": 0,
+    "http": 202,
+    "status": "done",
+    "error": null,
+    "states_seen": [
+     "done",
+     "running"
+    ],
+    "s": 4.6,
+    "verdict": "UNVERIFIED",
+    "slowest": [
+     [
+      "ocr_tesseract",
+      "LOCAL_SUCCESS",
+      4161.5
+     ],
+     [
+      "sanitize_copy",
+      "LOCAL_SUCCESS",
+      196.6
+     ]
+    ],
+    "failed_tools": []
+   }
+  ],
+  "pass": true
+ }
+}

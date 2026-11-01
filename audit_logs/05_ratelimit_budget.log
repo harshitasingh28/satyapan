@@ -1,0 +1,96 @@
+### rate limit: 12 rapid POSTs 21:24:19Z
+202 202 202 202 202 202 202 202 202 202 429 429 
+### GET is not rate limited (polling): 30 GETs
+200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 
+### X-Forwarded-For spoofing does not bypass (limit keyed on socket peer)
+202
+### DailyBudget race: 8 threads, each with its own DailyBudget on one file (as the app creates one per request), limit 20, 5 takes each
+Exception in thread Thread-3 (worker):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "<stdin>", line 9, in worker
+  File "/tmp/claude-0/audit/src/satyapan-feasibility/satyapan/security/ratelimit.py", line 55, in take
+    data = self._load()
+           ^^^^^^^^^^^^
+  File "/tmp/claude-0/audit/src/satyapan-feasibility/satyapan/security/ratelimit.py", line 46, in _load
+    data = json.loads(self.path.read_text())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+Exception in thread Thread-5 (worker):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+Exception in thread     self.run()
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "<stdin>", line 9, in worker
+  File "/tmp/claude-0/audit/src/satyapan-feasibility/satyapan/security/ratelimit.py", line 55, in take
+    data = self._load()
+           ^^^^^^^^^^^^
+  File "/tmp/claude-0/audit/src/satyapan-feasibility/satyapan/security/ratelimit.py", line 46, in _load
+    data = json.loads(self.path.read_text())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+Thread-4 (worker):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "<stdin>", line 9, in worker
+  File "/tmp/claude-0/audit/src/satyapan-feasibility/satyapan/security/ratelimit.py", line 55, in take
+    data = self._load()
+           ^^^^^^^^^^^^
+  File "/tmp/claude-0/audit/src/satyapan-feasibility/satyapan/security/ratelimit.py", line 46, in _load
+    data = json.loads(self.path.read_text())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+Exception in thread Thread-7 (worker):
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.12/threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "<stdin>", line 9, in worker
+  File "/tmp/claude-0/audit/src/satyapan-feasibility/satyapan/security/ratelimit.py", line 55, in take
+    data = self._load()
+           ^^^^^^^^^^^^
+  File "/tmp/claude-0/audit/src/satyapan-feasibility/satyapan/security/ratelimit.py", line 46, in _load
+    data = json.loads(self.path.read_text())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+granted: 20 of 40 requests, limit 20, file says: {'sightengine_genai': 20}

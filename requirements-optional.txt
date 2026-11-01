@@ -1,0 +1,5 @@
+# LangGraph runner (satyapan/pipeline/graph_langgraph.py)
+langgraph>=0.2
+# Optional local detectors (large download: torch). Only signals, never verdicts.
+# transformers>=4.44
+# torch>=2.3

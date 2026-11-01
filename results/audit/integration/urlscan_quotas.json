@@ -1,0 +1,33 @@
+{
+ "test": "urlscan_quotas",
+ "run_at": "2026-10-30T21:39:38+00:00",
+ "host": "vm",
+ "status": "BLOCKED",
+ "request_sent": true,
+ "genuine_external": false,
+ "error": "network: 403 Forbidden",
+ "http_status": null,
+ "elapsed_ms": 2520.0,
+ "calls": [
+  {
+   "tool": "urlscan_quotas",
+   "method": "GET",
+   "url": "https://urlscan.io/api/v1/quotas",
+   "http_status": null,
+   "ms": 287.1,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "urlscan_quotas",
+   "method": "GET",
+   "url": "https://urlscan.io/api/v1/quotas",
+   "http_status": null,
+   "ms": 232.5,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  }
+ ]
+}

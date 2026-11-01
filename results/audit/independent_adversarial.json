@@ -1,0 +1,690 @@
+{
+  "passed": 25,
+  "total": 25,
+  "sanity": {
+    "control_exact_release": "GENUINE",
+    "evidence": [
+      {
+        "tool": "pib_release_index",
+        "stance": "supports",
+        "strength": "strong",
+        "established": "An official PIB release matches the claim (90% of claim terms, amounts and dates consistent, links official): 'PM-KISAN 21st instalment of Rs 2,000 released to over 9 crore farmers'.",
+        "independence_key": "official:https://pib.gov.in/PressReleasePage.aspx?PRID=2100003"
+      },
+      {
+        "tool": "url_analysis",
+        "stance": "supports",
+        "strength": "weak",
+        "established": "pmkisan.gov.in is an official government domain (gov.in/nic.in).",
+        "independence_key": "domain:pmkisan.gov.in"
+      }
+    ]
+  },
+  "results": [
+    {
+      "id": "I01_news_india_host_official_name_in_path",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 172,
+      "verdict": "UNVERIFIED",
+      "evidence": [],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://indianexpress.com/article/india/pmkisan-21st-installment-date-10312026/', ms=21.2, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='indianexpress.com', ms=2001.4, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://indianexpress.com/article/india/pmkisan-21st-installment-date-10312026/', ms=0.0, detail='background sandbox scan not requested')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I02_state_nic_in_with_official_fragment",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 154,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "supports",
+          "strength": "weak",
+          "established": "keralaresults.nic.in is an official government domain (gov.in/nic.in).",
+          "independence_key": "domain:keralaresults.nic.in"
+        },
+        {
+          "tool": "url_analysis",
+          "stance": "supports",
+          "strength": "weak",
+          "established": "eciresults.nic.in is an official government domain (gov.in/nic.in).",
+          "independence_key": "domain:eciresults.nic.in"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://keralaresults.nic.in', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://eciresults.nic.in', ms=0.1, detail='')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='2 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I03_psu_sbi_not_allowlisted",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 243,
+      "verdict": "UNVERIFIED",
+      "evidence": [],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.0, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://sbi.co.in/web/interest-rates/deposit-rates', ms=0.1, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='sbi.co.in', ms=2000.7, detail='network: offline')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://onlinesbi.sbi', ms=0.2, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='onlinesbi.sbi', ms=2000.8, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='2 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://sbi.co.in/web/interest-rates/deposit-rates', ms=0.0, detail='background sandbox scan not requested')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://onlinesbi.sbi', ms=0.0, detail='background sandbox scan not requested')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I04_psu_lic_india_fragment_plus_apply",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 146,
+      "verdict": "UNVERIFIED",
+      "evidence": [],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://licindia.in/web/guest/jeevan-utsav', ms=0.2, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='licindia.in', ms=2000.8, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://licindia.in/web/guest/jeevan-utsav', ms=0.0, detail='background sandbox scan not requested')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I05_foreign_gov_au_apply_now",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 192,
+      "verdict": "UNVERIFIED",
+      "evidence": [],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/work-holiday-462', ms=0.4, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='homeaffairs.gov.au', ms=2001.8, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/work-holiday-462', ms=0.0, detail='background sandbox scan not requested')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I06_hindi_genuine_danda_after_url",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 119,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "supports",
+          "strength": "weak",
+          "established": "pmkisan.gov.in is an official government domain (gov.in/nic.in).",
+          "independence_key": "domain:pmkisan.gov.in"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://pmkisan.gov.in', ms=0.1, detail='')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I07_hindi_scam_official_label",
+      "acceptable": [
+        "FAKE"
+      ],
+      "text_len": 111,
+      "verdict": "FAKE",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "contradicts",
+          "strength": "strong",
+          "established": "The message invokes सरकार, bonus, योजना but links to pmkisan-diwali-bonus.top, which is not an official domain and imitates one (official_label_in_host).",
+          "independence_key": "url_rules"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.0, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://pmkisan-diwali-bonus.top/apply', ms=0.1, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='pmkisan-diwali-bonus.top', ms=2000.7, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://pmkisan-diwali-bonus.top/apply', ms=0.0, detail='background sandbox scan not requested')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I08_telugu_genuine_url_in_parentheses",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 139,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "supports",
+          "strength": "weak",
+          "established": "telangana.gov.in is an official government domain (gov.in/nic.in).",
+          "independence_key": "domain:telangana.gov.in"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://www.telangana.gov.in', ms=0.1, detail='')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I09_telugu_scam_cyrillic_o_in_gov",
+      "acceptable": [
+        "FAKE"
+      ],
+      "text_len": 128,
+      "verdict": "FAKE",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "contradicts",
+          "strength": "strong",
+          "established": "The message invokes పథకం but links to gоv.in, which is not an official domain and imitates one (official_label_in_host).",
+          "independence_key": "url_rules"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://pmkisan.gоv.in/ekyc', ms=0.7, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='gоv.in', ms=2001.7, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://pmkisan.gоv.in/ekyc', ms=0.0, detail='background sandbox scan not requested')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I10_zero_width_space_inside_official_name",
+      "acceptable": [
+        "FAKE"
+      ],
+      "text_len": 134,
+      "verdict": "FAKE",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "contradicts",
+          "strength": "strong",
+          "established": "The message invokes pm kisan but links to benefit-claim.top, which is not an official domain and imitates one (official_label_in_host, official_name_inside_other_domain).",
+          "independence_key": "url_rules"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='http://pmki\\u200bsan.gov.in.benefit-claim.top/register', ms=0.2, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='benefit-claim.top', ms=2001.1, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='http://pmkisan.gov.in.benefit-claim.top/register', ms=0.0, detail='background sandbox scan not requested')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I11_fullwidth_dots_scam_host",
+      "acceptable": [
+        "FAKE"
+      ],
+      "text_len": 116,
+      "verdict": "FAKE",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "contradicts",
+          "strength": "strong",
+          "established": "The message invokes uidai but links to kyc-update.top, which is not an official domain and imitates one (official_label_in_host, official_name_inside_other_domain).",
+          "independence_key": "url_rules"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://uidai．gov．in．kyc-update．top/login', ms=0.3, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='kyc-update.top', ms=2000.9, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://uidai.gov.in.kyc-update.top/login', ms=0.0, detail='background sandbox scan not requested')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I12_all_caps_genuine_official",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 129,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "supports",
+          "strength": "weak",
+          "established": "incometax.gov.in is an official government domain (gov.in/nic.in).",
+          "independence_key": "domain:incometax.gov.in"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='HTTPS://WWW.INCOMETAX.GOV.IN/IEC/FOPORTAL/', ms=0.1, detail='')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I13_genuine_port_and_sentence_ending_dot",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 174,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "supports",
+          "strength": "weak",
+          "established": "uidai.gov.in is an official government domain (gov.in/nic.in).",
+          "independence_key": "domain:uidai.gov.in"
+        },
+        {
+          "tool": "url_analysis",
+          "stance": "supports",
+          "strength": "weak",
+          "established": "pmkisan.gov.in is an official government domain (gov.in/nic.in).",
+          "independence_key": "domain:pmkisan.gov.in"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://myaadhaar.uidai.gov.in:443/', ms=0.2, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://pmkisan.gov.in', ms=0.1, detail='')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='2 url(s)', ms=0.1, detail='GOOGLE_API_KEY not configured')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I14_ip_literal_with_port_official_name_in_path",
+      "acceptable": [
+        "FAKE",
+        "UNVERIFIED"
+      ],
+      "text_len": 107,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "contradicts",
+          "strength": "weak",
+          "established": "The message asks readers to act (register) through 103.21.244.10, which is not an official government domain.",
+          "independence_key": "url_rules"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='http://103.21.244.10:8080/pmkisan/register', ms=0.2, detail='')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I15_official_domains_only_in_path_and_query",
+      "acceptable": [
+        "FAKE",
+        "UNVERIFIED"
+      ],
+      "text_len": 113,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "contradicts",
+          "strength": "weak",
+          "established": "The message asks readers to act (click) through secure-verify.top, which is not an official government domain.",
+          "independence_key": "url_rules"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.0, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://secure-verify.top/uidai.gov.in/login?ref=pmkisan.gov.in', ms=0.2, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='secure-verify.top', ms=2000.9, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://secure-verify.top/uidai.gov.in/login?ref=pmkisan.gov.in', ms=0.0, detail='background sandbox scan not requested')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I16_very_long_message_scam_link_at_end",
+      "acceptable": [
+        "FAKE"
+      ],
+      "text_len": 59875,
+      "verdict": "FAKE",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "contradicts",
+          "strength": "strong",
+          "established": "The message invokes government, government of india, scheme but links to bonus-claim.top, which is not an official domain and imitates one (official_label_in_host, official_name_inside_other_domain).",
+          "independence_key": "url_rules"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://pmkisan.gov.in.bonus-claim.top/apply', ms=0.2, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='bonus-claim.top', ms=2000.8, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://pmkisan.gov.in.bonus-claim.top/apply', ms=0.0, detail='background sandbox scan not requested')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I17_empty_ish_whitespace_and_zero_width",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 9,
+      "verdict": "UNVERIFIED",
+      "evidence": [],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I18_emoji_heavy_whatsapp_bold_genuine",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 172,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "supports",
+          "strength": "weak",
+          "established": "uidai.gov.in is an official government domain (gov.in/nic.in).",
+          "independence_key": "domain:uidai.gov.in"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://myaadhaar.uidai.gov.in*', ms=0.2, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://uidai.gov.in', ms=0.1, detail='')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.1, detail='GOOGLE_API_KEY not configured')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I19_prompt_injection_scam",
+      "acceptable": [
+        "FAKE"
+      ],
+      "text_len": 273,
+      "verdict": "FAKE",
+      "evidence": [
+        {
+          "tool": "url_analysis",
+          "stance": "contradicts",
+          "strength": "strong",
+          "established": "The message invokes pib, pm kisan, bonus but links to pmkisan-bonus.top, which is not an official domain and imitates one (official_label_in_host).",
+          "independence_key": "url_rules"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://pmkisan-bonus.top/register', ms=0.2, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='pmkisan-bonus.top', ms=2001.2, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://pmkisan-bonus.top/register', ms=0.0, detail='background sandbox scan not requested')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I20_fixture_lakh_vs_crore_same_numeral",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 163,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "pib_release_index",
+          "stance": "neutral",
+          "strength": "none",
+          "established": "A related official release exists: 'Ayushman Bharat PM-JAY health cover of Rs 5 lakh per family extended to all senior citizens aged 70 and above'. It does not confirm this message.",
+          "independence_key": "official:https://pib.gov.in/PressReleasePage.aspx?PRID=2100001"
+        },
+        {
+          "tool": "url_analysis",
+          "stance": "supports",
+          "strength": "weak",
+          "established": "nha.gov.in is an official government domain (gov.in/nic.in).",
+          "independence_key": "domain:nha.gov.in"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.2, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://beneficiary.nha.gov.in', ms=0.1, detail='')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='ai_comparison', status='NOT_TESTED', target='C1', ms=0.0, detail='HF_TOKEN / HF_CHAT_MODEL not configured')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I21_fixture_date_month_differs",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 109,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "pib_release_index",
+          "stance": "neutral",
+          "strength": "none",
+          "established": "A related official release exists: 'CBDT extends due date for filing income tax returns to 15 December 2026'. It does not confirm this message.",
+          "independence_key": "official:https://pib.gov.in/PressReleasePage.aspx?PRID=2100002"
+        },
+        {
+          "tool": "url_analysis",
+          "stance": "supports",
+          "strength": "weak",
+          "established": "incometax.gov.in is an official government domain (gov.in/nic.in).",
+          "independence_key": "domain:incometax.gov.in"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://www.incometax.gov.in', ms=0.1, detail='')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='ai_comparison', status='NOT_TESTED', target='C1', ms=0.0, detail='HF_TOKEN / HF_CHAT_MODEL not configured')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I22_fixture_extra_fabricated_amount",
+      "acceptable": [
+        "UNVERIFIED"
+      ],
+      "text_len": 117,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "pib_release_index",
+          "stance": "neutral",
+          "strength": "none",
+          "established": "A related official release exists: 'PM-KISAN 21st instalment of Rs 2,000 released to over 9 crore farmers'. It does not confirm this message.",
+          "independence_key": "official:https://pib.gov.in/PressReleasePage.aspx?PRID=2100003"
+        },
+        {
+          "tool": "url_analysis",
+          "stance": "supports",
+          "strength": "weak",
+          "established": "pmkisan.gov.in is an official government domain (gov.in/nic.in).",
+          "independence_key": "domain:pmkisan.gov.in"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://pmkisan.gov.in', ms=0.1, detail='')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='ai_comparison', status='NOT_TESTED', target='C1', ms=0.0, detail='HF_TOKEN / HF_CHAT_MODEL not configured')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I23_fixture_schemeless_scam_domain",
+      "acceptable": [
+        "FAKE",
+        "UNVERIFIED"
+      ],
+      "text_len": 100,
+      "verdict": "FAKE",
+      "evidence": [
+        {
+          "tool": "pib_release_index",
+          "stance": "neutral",
+          "strength": "none",
+          "established": "A related official release exists: 'PM-KISAN 21st instalment of Rs 2,000 released to over 9 crore farmers'. It does not confirm this message.",
+          "independence_key": "official:https://pib.gov.in/PressReleasePage.aspx?PRID=2100003"
+        },
+        {
+          "tool": "url_analysis",
+          "stance": "contradicts",
+          "strength": "strong",
+          "established": "The message invokes pm-kisan but links to pmkisan-ekyc.top, which is not an official domain and imitates one (official_label_in_host).",
+          "independence_key": "url_rules"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='http://pmkisan-ekyc.top/verify', ms=0.1, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='pmkisan-ekyc.top', ms=2001.0, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='1 url(s)', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='http://pmkisan-ekyc.top/verify', ms=0.0, detail='background sandbox scan not requested')",
+        "ToolRun(tool='ai_comparison', status='NOT_TESTED', target='C1', ms=0.0, detail='HF_TOKEN / HF_CHAT_MODEL not configured')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I24_fixture_open_redirect_on_gov_in",
+      "acceptable": [
+        "FAKE",
+        "UNVERIFIED"
+      ],
+      "text_len": 169,
+      "verdict": "UNVERIFIED",
+      "evidence": [
+        {
+          "tool": "pib_release_index",
+          "stance": "neutral",
+          "strength": "none",
+          "established": "A related official release exists: 'UIDAI extends free online Aadhaar document update facility till 14 December 2026'. It does not confirm this message.",
+          "independence_key": "official:https://pib.gov.in/PressReleasePage.aspx?PRID=2100004"
+        },
+        {
+          "tool": "url_analysis",
+          "stance": "contradicts",
+          "strength": "moderate",
+          "established": "The link starts on uidai.gov.in but carries a redirect to aadhaar-docs-update.top, which is a different site.",
+          "independence_key": "url_rules"
+        }
+      ],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.1, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.2, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://uidai.gov.in/redirect?url=https%3A%2F%2Faadhaar-docs-update.top%2Flogin', ms=0.2, detail='')",
+        "ToolRun(tool='url_analysis', status='LOCAL_SUCCESS', target='https://aadhaar-docs-update.top/login', ms=0.1, detail='')",
+        "ToolRun(tool='rdap', status='BLOCKED', target='aadhaar-docs-update.top', ms=2000.9, detail='network: offline')",
+        "ToolRun(tool='safe_browsing', status='AUTH_REQUIRED', target='2 url(s)', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='urlscan', status='SKIPPED_CONSENT', target='https://aadhaar-docs-update.top/login', ms=0.0, detail='background sandbox scan not requested')",
+        "ToolRun(tool='ai_comparison', status='NOT_TESTED', target='C1', ms=0.0, detail='HF_TOKEN / HF_CHAT_MODEL not configured')"
+      ],
+      "exception": null,
+      "pass": true
+    },
+    {
+      "id": "I25_fixture_genuine_warning_quotes_known_debunk",
+      "acceptable": [
+        "GENUINE",
+        "UNVERIFIED"
+      ],
+      "text_len": 185,
+      "verdict": "UNVERIFIED",
+      "evidence": [],
+      "tool_runs": [
+        "ToolRun(tool='factcheck_search', status='AUTH_REQUIRED', target='C1', ms=0.0, detail='GOOGLE_API_KEY not configured')",
+        "ToolRun(tool='known_claims_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')",
+        "ToolRun(tool='pib_release_index', status='LOCAL_SUCCESS', target='C1', ms=0.1, detail='')"
+      ],
+      "exception": null,
+      "pass": true
+    }
+  ]
+}

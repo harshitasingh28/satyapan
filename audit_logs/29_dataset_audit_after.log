@@ -1,0 +1,7 @@
+claim manifest eval/manifest_template.csv: 0/100 rows filled
+detector manifest eval/detector_manifest_template.csv: 0/120 rows filled, {'dev/ai': 20, 'dev/real': 20, 'test/ai': 40, 'test/real': 40}
+plan dev 30 test 70 (declared {'dev': 30, 'test': 70, 'all': 100}), test truth {'TRUE': 21, 'FALSE': 46, 'UNRESOLVED': 3}
+FALSE claims expected to abstain (UNVERIFIED) by design: ['M']
+validator: WARNING 100 of 100 rows are still empty templates | 100 rows, 0 filled, 0 errors
+PASS  near-duplicate leak detected: ['LEAKAGE (possible near-duplicate image, review): test T matches dev D (phash+orb)']
+DATASET NOT COLLECTED: no accuracy figure can be reported

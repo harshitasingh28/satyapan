@@ -1,0 +1,128 @@
+[
+ {
+  "area": "SSRF",
+  "test": "server made no request to itself via submitted links",
+  "pass": true,
+  "detail": "/health hits before 1, after 1"
+ },
+ {
+  "area": "SSRF",
+  "test": "unsafe links never passed to RDAP / Safe Browsing / urlscan",
+  "pass": true,
+  "detail": "[]"
+ },
+ {
+  "area": "Path traversal",
+  "test": "client filename not used as a path",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "Uploads",
+  "test": "oversized upload refused (413)",
+  "pass": true,
+  "detail": "HTTP 413 after 0.15 s"
+ },
+ {
+  "area": "Uploads",
+  "test": "huge Content-Length rejected before reading the body",
+  "pass": true,
+  "detail": "reply: 413"
+ },
+ {
+  "area": "Retention",
+  "test": "uploads are removed after processing",
+  "pass": true,
+  "detail": "0 uploaded files still on disk after all investigations finished"
+ },
+ {
+  "area": "Retention",
+  "test": "sweep deletes investigation records older than the retention window",
+  "pass": true,
+  "detail": "removed 1, left ['newrecord1']"
+ },
+ {
+  "area": "Retention",
+  "test": "the API schedules the sweep (start-up and while serving)",
+  "pass": true,
+  "detail": "_last_sweep=1793397392.7894213"
+ },
+ {
+  "area": "Uploads",
+  "test": "60 MP image rejected (configured limit 40 MP)",
+  "pass": true,
+  "detail": "ok=False errors=['image exceeds the pixel limit (8000x7500 > 40,000,000 pixels)'] size=7354 bytes"
+ },
+ {
+  "area": "Uploads",
+  "test": "random bytes with an MP4 header rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "Uploads",
+  "test": "corrupt WAV rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "Uploads",
+  "test": "MP4 with no video stream handled (rejected as video or accepted as audio)",
+  "pass": true,
+  "detail": "kind=video ok=False errors=['no video stream']"
+ },
+ {
+  "area": "Uploads",
+  "test": "JPEG with appended payload (polyglot) noted",
+  "pass": true,
+  "detail": "accepted=True. Not executed, and re-encoded before any third-party upload"
+ },
+ {
+  "area": "URL schemes",
+  "test": "javascript rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "URL schemes",
+  "test": "data rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "URL schemes",
+  "test": "file rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "URL schemes",
+  "test": "vbscript rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "URL schemes",
+  "test": "jar rejected",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "area": "Injection",
+  "test": "crafted host never reaches an RDAP request path: http://evil%2F..%2Fadmin.com/",
+  "pass": true,
+  "detail": "registered='evil%2f..%2fadmin.com' valid_host=False requests=[]"
+ },
+ {
+  "area": "Injection",
+  "test": "crafted host never reaches an RDAP request path: http://a.b.com%23frag/",
+  "pass": true,
+  "detail": "registered='a.b.com%23frag' valid_host=False requests=[]"
+ },
+ {
+  "area": "Injection",
+  "test": "crafted host never reaches an RDAP request path: http://x.com\\@pib.gov.in/",
+  "pass": true,
+  "detail": "registered='x.com' valid_host=True requests=['https://data.iana.org/rdap/dns.json']"
+ }
+]

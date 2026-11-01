@@ -1,0 +1,38 @@
+{
+ "key_in_report": false,
+ "key_in_call_records": false,
+ "key_in_logs": false,
+ "hf_called": true,
+ "tool_run_details": [
+  [
+   "llm_claims",
+   "SERVICE_ERROR",
+   "bad request for https://router.huggingface.co/v1/chat/completions body={\"model\":\"audit/model\",\"temperature\":0,\"max_tokens\":900,\"messages\":[{\"role\":\"system\",\"con"
+  ],
+  [
+   "factcheck_search",
+   "SERVICE_ERROR",
+   "bad request for https://factchecktools.googleapis.com/v1alpha1/claims:search?pageSize=10&query=PIB%3A+free+laptops+for+students%2C+register+at&languageCode=en&k"
+  ],
+  [
+   "rdap",
+   "SERVICE_ERROR",
+   "bootstrap HTTP 400"
+  ],
+  [
+   "safe_browsing",
+   "SERVICE_ERROR",
+   "bad request for https://safebrowsing.googleapis.com/v4/threatMatches:find?key=REDACTED body={\"client\":{\"clientId\":\"satyapan\",\"clientVersion\":\"0.2\"},\"threatInfo\""
+  ],
+  [
+   "urlscan",
+   "SKIPPED_CONSENT",
+   "background sandbox scan not requested"
+  ],
+  [
+   "ai_explanation",
+   "SERVICE_ERROR",
+   "LLM unavailable: SERVICE_ERROR"
+  ]
+ ]
+}

@@ -1,0 +1,73 @@
+{
+ "test": "pib_rss",
+ "run_at": "2026-10-30T21:39:30+00:00",
+ "host": "vm",
+ "status": "BLOCKED",
+ "request_sent": true,
+ "genuine_external": false,
+ "error": "all PIB feeds failed",
+ "http_status": null,
+ "elapsed_ms": 7441.5,
+ "calls": [
+  {
+   "tool": "pib_rss_releases_en_documented",
+   "method": "GET",
+   "url": "https://www.pib.gov.in/RssMain.aspx?ModId=6&Lang=1&Regid=3",
+   "http_status": null,
+   "ms": 288.0,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "pib_rss_releases_en_documented",
+   "method": "GET",
+   "url": "https://www.pib.gov.in/RssMain.aspx?ModId=6&Lang=1&Regid=3",
+   "http_status": null,
+   "ms": 108.5,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "pib_rss_releases_en_variant",
+   "method": "GET",
+   "url": "https://www.pib.gov.in/RssMain.aspx?ModId=6&lang=1&regid=3&reg=3",
+   "http_status": null,
+   "ms": 265.7,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "pib_rss_releases_en_variant",
+   "method": "GET",
+   "url": "https://www.pib.gov.in/RssMain.aspx?ModId=6&lang=1&regid=3&reg=3",
+   "http_status": null,
+   "ms": 278.7,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "pib_rss_releases_hi",
+   "method": "GET",
+   "url": "https://www.pib.gov.in/RssMain.aspx?ModId=6&Lang=2&Regid=3",
+   "http_status": null,
+   "ms": 224.7,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "pib_rss_releases_hi",
+   "method": "GET",
+   "url": "https://www.pib.gov.in/RssMain.aspx?ModId=6&Lang=2&Regid=3",
+   "http_status": null,
+   "ms": 274.1,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  }
+ ]
+}

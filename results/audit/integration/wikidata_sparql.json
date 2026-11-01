@@ -1,0 +1,33 @@
+{
+ "test": "wikidata_sparql",
+ "run_at": "2026-10-30T21:39:28+00:00",
+ "host": "vm",
+ "status": "BLOCKED",
+ "request_sent": true,
+ "genuine_external": false,
+ "error": "network: 403 Forbidden",
+ "http_status": null,
+ "elapsed_ms": 2291.6,
+ "calls": [
+  {
+   "tool": "wikidata",
+   "method": "GET",
+   "url": "https://query.wikidata.org/sparql?query=SELECT+DISTINCT+%3Fitem+%3Fsite+WHERE+%7B%0A++VALUES+%3Fname+%7B+%22Unique+Identification+Authority+of+India%22%40en+%7D%0A++%7B+%3Fitem+rdfs%3Alabel+%3Fname+%7D+UNION+%7B+%3Fitem+skos%3AaltLabel+%3Fname+%7D%0A++%3Fitem+wdt%3AP856+%3Fsite+.%0A%7D+LIMIT+10&format=json",
+   "http_status": null,
+   "ms": 144.5,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "wikidata",
+   "method": "GET",
+   "url": "https://query.wikidata.org/sparql?query=SELECT+DISTINCT+%3Fitem+%3Fsite+WHERE+%7B%0A++VALUES+%3Fname+%7B+%22Unique+Identification+Authority+of+India%22%40en+%7D%0A++%7B+%3Fitem+rdfs%3Alabel+%3Fname+%7D+UNION+%7B+%3Fitem+skos%3AaltLabel+%3Fname+%7D%0A++%3Fitem+wdt%3AP856+%3Fsite+.%0A%7D+LIMIT+10&format=json",
+   "http_status": null,
+   "ms": 146.5,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  }
+ ]
+}

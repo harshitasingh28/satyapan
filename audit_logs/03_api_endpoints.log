@@ -1,0 +1,22 @@
+### 21:23:32Z GET /health
+{"ok":true}  HTTP 200 0.065618s
+### GET /openapi.json paths
+['/health', '/v1/investigations', '/v1/investigations/{investigation_id}']
+### GET /docs
+HTTP 200
+### POST empty
+{"detail":"send text, links or at least one file"}  HTTP 400
+### POST text
+{"id":"1ac5d61b2d20","status":"running"}
+done FAKE [('factcheck_search', 'AUTH_REQUIRED'), ('pib_release_index', 'LOCAL_SUCCESS'), ('url_analysis', 'LOCAL_SUCCESS'), ('rdap', 'BLOCKED'), ('safe_browsing', 'AUTH_REQUIRED'), ('urlscan', 'SKIPPED_CONSENT')] 1
+### POST image (real JPEG)
+done UNVERIFIED {'M1': {'kind': 'image', 'manipulation': 'NOT_ASSESSED', 'credentials': 'none', 'provenance': 'INDEX_EMPTY'}} [('ocr_tesseract', 'LOCAL_SUCCESS'), ('factcheck_search', 'AUTH_REQUIRED'), ('pib_release_index', 'LOCAL_SUCCESS'), ('c2pa', 'LOCAL_SUCCESS')]
+### POST 5 files
+{"detail":"at most 4 files"}  HTTP 400
+### POST disguised script
+done UNVERIFIED [('upload_validation', 'INPUT_ERROR', 'unsupported or unrecognised file type'), ('factcheck_search', 'SKIPPED_NOT_APPLICABLE', 'no text claim')]
+### GET unknown / traversal
+doesnotexist -> HTTP 404
+..%2F..%2Fetc%2Fpasswd -> HTTP 404
+%2e%2e -> HTTP 404
+abc;rm -> HTTP 404

@@ -1,0 +1,6 @@
+### word-swap probe: FIXTURE releases modelled on real titles, offline (mocked transport)
+GENUINE    exact title + link (control)       entities=['pib'] evidence=[('pib_release_index', 'supports', 'strong', 0.909), ('url_analysis', 'supports', 'weak', None)]
+GENUINE    antonym swap: Lowest -> Highest    entities=['pib'] evidence=[('pib_release_index', 'supports', 'strong', 0.818), ('url_analysis', 'supports', 'weak', None)]
+GENUINE    word swap: Uphold -> Abandon       entities=['pib'] evidence=[('pib_release_index', 'supports', 'strong', 0.833), ('url_analysis', 'supports', 'weak', None)]
+GENUINE    negation added                     entities=['epfo', 'pib'] evidence=[('pib_release_index', 'supports', 'strong', 0.8), ('url_analysis', 'supports', 'weak', None)]
+UNVERIFIED altered claim, NO link             entities=[] evidence=[('pib_release_index', 'neutral', 'none', 0.9)]

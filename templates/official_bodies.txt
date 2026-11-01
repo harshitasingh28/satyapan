@@ -1,0 +1,6 @@
+# English Wikidata labels of official bodies, one per line, for scripts/build_allowlist.py
+Unique Identification Authority of India
+Press Information Bureau
+Election Commission of India
+Reserve Bank of India
+Indian Railway Catering and Tourism Corporation

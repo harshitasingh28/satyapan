@@ -1,0 +1,136 @@
+{
+ "set": "dev",
+ "thresholds_frozen": {
+  "MIN_INLIERS": 25,
+  "MIN_INLIER_RATIO": 0.3,
+  "MIN_SPREAD": 0.1,
+  "MAX_ANISOTROPY": 3.0,
+  "CROP_SCALES": [
+   1.0,
+   0.9,
+   0.8
+  ]
+ },
+ "indexed": 12,
+ "positive_queries": 144,
+ "negative_queries": 20,
+ "TP": 140,
+ "FN": 4,
+ "wrong_attributions": 0,
+ "FP_on_negatives": 0,
+ "FP_total": 0,
+ "TN": 20,
+ "precision": 1.0,
+ "recall": 0.972,
+ "f1": 0.986,
+ "fpr": 0.0,
+ "per_transform_recall": {
+  "original": 1.0,
+  "resize50": 1.0,
+  "jpeg30": 1.0,
+  "centre_crop70": 0.917,
+  "offcentre_crop55_br": 0.75,
+  "screenshot_v2": 1.0,
+  "watermark_tiled": 1.0,
+  "blur2.5": 1.0,
+  "rotate7": 1.0,
+  "rotate15": 1.0,
+  "combo_screenshot_resize60_jpeg50": 1.0,
+  "mirror": 1.0
+ },
+ "per_transform_counts": {
+  "original": {
+   "TP": 12,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "resize50": {
+   "TP": 12,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "jpeg30": {
+   "TP": 12,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "centre_crop70": {
+   "TP": 11,
+   "FN": 1,
+   "WRONG": 0
+  },
+  "offcentre_crop55_br": {
+   "TP": 9,
+   "FN": 3,
+   "WRONG": 0
+  },
+  "screenshot_v2": {
+   "TP": 12,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "watermark_tiled": {
+   "TP": 12,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "blur2.5": {
+   "TP": 12,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "rotate7": {
+   "TP": 12,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "rotate15": {
+   "TP": 12,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "combo_screenshot_resize60_jpeg50": {
+   "TP": 12,
+   "FN": 0,
+   "WRONG": 0
+  },
+  "mirror": {
+   "TP": 12,
+   "FN": 0,
+   "WRONG": 0
+  }
+ },
+ "negatives": {
+  "easy_negatives": {
+   "TN": 20,
+   "FP": 0
+  }
+ },
+ "false_positives": [],
+ "misses": [
+  [
+   "chelsea.png",
+   "offcentre_crop55_br",
+   null
+  ],
+  [
+   "retina.jpg",
+   "centre_crop70",
+   null
+  ],
+  [
+   "retina.jpg",
+   "offcentre_crop55_br",
+   null
+  ],
+  [
+   "page.png",
+   "offcentre_crop55_br",
+   null
+  ]
+ ],
+ "excluded": "",
+ "index_build_s": 0.53,
+ "query_ms_p50": 53.6,
+ "query_ms_p95": 127.2
+}

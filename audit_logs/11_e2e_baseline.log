@@ -1,0 +1,20 @@
+build_known_index: 1 known claims, 2 images, 1 audio clips indexed
+context: image index loaded, audio index MISSING, known claims 1, PIB releases 1
+OK   A1  truth=TRUE                       verdict=GENUINE    official title plus the official link
+OK   A2  truth=TRUE                       verdict=UNVERIFIED paraphrased forward, must not be FAKE
+OK   B1  truth=FALSE                      verdict=FAKE       debunk wording as reported by All India Radio (PIB Fact Chec
+FAIL B2  truth=FALSE                      verdict=UNVERIFIED paraphrase of the same false claim
+OK   C1  truth=UNRESOLVED                 verdict=UNVERIFIED no fact-check exists
+OK   D1  truth=FALSE                      verdict=FAKE       lookalike, official name inside another domain
+OK   D2  truth=FALSE                      verdict=FAKE       punycode homoglyph xn--uida-o9d.in
+OK   D3  truth=UNKNOWN                    verdict=UNVERIFIED redirect target unknown without urlscan
+FAIL D4  truth=MALICIOUS_TEST_URL         verdict=UNVERIFIED Google's Safe Browsing test page
+OK   E1  truth=REUSED_DEBUNKED_IMAGE      verdict=FAKE       screenshot of an indexed debunked image
+OK   E2  truth=REUSED_DEBUNKED_IMAGE      verdict=FAKE       off-centre crop (60%) of the indexed image
+OK   F1  truth=MANIPULATED (copy-move)    verdict=UNVERIFIED manipulated image whose original is not indexed: the system 
+FAIL F2  truth=MANIPULATED AFTER SIGNING  verdict=UNVERIFIED C2PA-signed file with pixels changed after signing
+         c2pa validation_state seen: ['Invalid'], reported as manipulation evidence: False
+OK   G1  truth=REUSED_DEBUNKED_FRAME      verdict=FAKE       video containing an indexed debunked image as one scene
+FAIL H1  truth=REUSED_DEBUNKED_AUDIO      verdict=UNVERIFIED 16 kbps Opus excerpt of indexed debunked audio
+
+11/15 scenarios correct. Saved results/audit/e2e_scenarios_BASELINE.json

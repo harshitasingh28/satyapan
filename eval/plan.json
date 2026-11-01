@@ -1,0 +1,18 @@
+{
+  "description": "Claim-level evaluation plan. 100 real items: 30 development (tuning) and 70 held-out test. Counts must match exactly.",
+  "categories": {
+    "G":  {"name": "Genuine government announcement", "dev": 9, "test": 21, "truth": "TRUE", "expected": "GENUINE", "acceptable": ["GENUINE", "UNVERIFIED"]},
+    "F1": {"name": "False claim with a fact-check record", "dev": 6, "test": 14, "truth": "FALSE", "expected": "FAKE", "acceptable": ["FAKE"]},
+    "F2": {"name": "False claim without a fact-check in the API", "dev": 4, "test": 11, "truth": "FALSE", "expected": "FAKE", "acceptable": ["FAKE", "UNVERIFIED"]},
+    "R":  {"name": "Recycled or altered image with known original", "dev": 4, "test": 11, "truth": "FALSE", "expected": "FAKE", "acceptable": ["FAKE", "UNVERIFIED"]},
+    "V":  {"name": "Video reused from known source material", "dev": 2, "test": 6, "truth": "FALSE", "expected": "FAKE", "acceptable": ["FAKE", "UNVERIFIED"]},
+    "M":  {"name": "Verified manipulated media (AI-generated, deepfake, voice clone)", "dev": 3, "test": 4, "truth": "FALSE", "expected": "UNVERIFIED", "acceptable": ["FAKE", "UNVERIFIED"]},
+    "U":  {"name": "Genuinely unresolved (no reliable evidence either way)", "dev": 2, "test": 3, "truth": "UNRESOLVED", "expected": "UNVERIFIED", "acceptable": ["UNVERIFIED"]}
+  },
+  "totals": {"dev": 30, "test": 70, "all": 100},
+  "requires_media": ["R", "V", "M"],
+  "requires_original_source": ["R", "V"],
+  "input_types": ["text", "screenshot", "image", "video", "audio", "link", "mixed"],
+  "media_status": ["none", "original", "recycled", "edited", "ai_generated", "manipulated_video", "voice_clone", "unknown"],
+  "languages": ["en", "hi", "te", "mixed", "other"]
+}

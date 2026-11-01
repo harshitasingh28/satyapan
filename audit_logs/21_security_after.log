@@ -1,0 +1,24 @@
+### 2026-10-30T21:56:28Z security_practical AFTER fixes
+PASS  [SSRF] server made no request to itself via submitted links  /health hits before 1, after 1
+PASS  [SSRF] unsafe links never passed to RDAP / Safe Browsing / urlscan  []
+PASS  [Path traversal] client filename not used as a path  
+PASS  [Uploads] oversized upload refused (413)  HTTP 413 after 0.15 s
+PASS  [Uploads] huge Content-Length rejected before reading the body  reply: 413
+PASS  [Retention] uploads are removed after processing  0 uploaded files still on disk after all investigations finished
+PASS  [Retention] sweep deletes investigation records older than the retention window  removed 1, left ['newrecord1']
+PASS  [Retention] the API schedules the sweep (start-up and while serving)  _last_sweep=1793397392.7894213
+PASS  [Uploads] 60 MP image rejected (configured limit 40 MP)  ok=False errors=['image exceeds the pixel limit (8000x7500 > 40,000,000 pixels)'] size=7354 bytes
+PASS  [Uploads] random bytes with an MP4 header rejected  
+PASS  [Uploads] corrupt WAV rejected  
+PASS  [Uploads] MP4 with no video stream handled (rejected as video or accepted as audio)  kind=video ok=False errors=['no video stream']
+PASS  [Uploads] JPEG with appended payload (polyglot) noted  accepted=True. Not executed, and re-encoded before any third-party upload
+PASS  [URL schemes] javascript rejected  
+PASS  [URL schemes] data rejected  
+PASS  [URL schemes] file rejected  
+PASS  [URL schemes] vbscript rejected  
+PASS  [URL schemes] jar rejected  
+PASS  [Injection] crafted host never reaches an RDAP request path: http://evil%2F..%2Fadmin.com/  registered='evil%2f..%2fadmin.com' valid_host=False requests=[]
+PASS  [Injection] crafted host never reaches an RDAP request path: http://a.b.com%23frag/  registered='a.b.com%23frag' valid_host=False requests=[]
+PASS  [Injection] crafted host never reaches an RDAP request path: http://x.com\@pib.gov.in/  registered='x.com' valid_host=True requests=['https://data.iana.org/rdap/dns.json']
+
+21/21 security checks passed. Saved results/audit/security_practical_AFTER.json

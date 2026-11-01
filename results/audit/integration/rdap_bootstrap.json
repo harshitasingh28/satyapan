@@ -1,0 +1,33 @@
+{
+ "test": "rdap_bootstrap",
+ "run_at": "2026-10-30T21:39:23+00:00",
+ "host": "vm",
+ "status": "BLOCKED",
+ "request_sent": true,
+ "genuine_external": false,
+ "error": "network: 403 Forbidden",
+ "http_status": null,
+ "elapsed_ms": 2520.7,
+ "calls": [
+  {
+   "tool": "rdap_bootstrap",
+   "method": "GET",
+   "url": "https://data.iana.org/rdap/dns.json",
+   "http_status": null,
+   "ms": 272.0,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "rdap_bootstrap",
+   "method": "GET",
+   "url": "https://data.iana.org/rdap/dns.json",
+   "http_status": null,
+   "ms": 248.2,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  }
+ ]
+}

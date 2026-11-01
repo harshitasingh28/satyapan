@@ -1,0 +1,13 @@
+### versions not caught above
+c2pa-python            0.38.1
+opencv-python-headless 5.0.0.93
+72 /tmp/claude-0/audit/logs/requirements.lock.txt
+### collect 21:22:40Z
+tests/test_security.py::test_rate_limit_and_budget
+
+66 tests collected in 3.28s
+      7 tests/test_pipeline.py::test_verdict_rules
+     18 tests/test_security.py::test_rejects_unsafe_urls
+      3 tests/test_security.py::test_status_mapping
+### run 21:22:48Z
+============================= 66 passed in 10.00s ==============================

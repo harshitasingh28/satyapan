@@ -1,0 +1,10 @@
+### 2026-10-30T22:00:10Z image eval AFTER fixes (matcher code unchanged: regression check only, no tuning)
+image_index.py identical to the delivered version
+[dev] indexed 12, positives 144, negatives 20
+TP 140  FN 4 (of which wrong attribution 0)  FP on negatives 0  TN 20
+precision 1.000  recall 0.972  F1 0.986  FPR 0.000
+   original                           recall 100%  {'TP': 12, 'FN': 0, 'WRONG': 0}
+[heldout] indexed 22, positives 265, negatives 68
+TP 257  FN 8 (of which wrong attribution 0)  FP on negatives 15  TN 53
+precision 0.945  recall 0.970  F1 0.957  FPR 0.221
+   original                           recall 100%  {'TP': 22, 'FN': 0, 'WRONG': 0}

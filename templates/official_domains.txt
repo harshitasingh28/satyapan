@@ -1,0 +1,14 @@
+# Official domains outside gov.in/nic.in, plus key gov.in sites for lookalike scoring.
+# Add only domains you confirmed on the body's own page or via scripts/build_allowlist.py.
+india.gov.in
+pib.gov.in
+myscheme.gov.in
+uidai.gov.in
+pmkisan.gov.in
+eci.gov.in
+incometax.gov.in
+rbi.org.in
+irctc.co.in
+npci.org.in
+# mygov.in: Government of India citizen platform, listed at https://www.digitalindia.gov.in/di_ecosystem/mygov/ (added in the audit round)
+mygov.in

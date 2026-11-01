@@ -1,0 +1,6 @@
+PASS  invented claim rejected
+PASS  invented URL dropped
+PASS  invented number dropped
+FAIL  verdict-contradicting statement dropped
+PASS  verdict still decided by code
+statements kept: ['This message is genuine and safe to share with everyone', 'The link in this message does not go to an official government domain']

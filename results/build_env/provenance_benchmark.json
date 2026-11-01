@@ -1,0 +1,108 @@
+{
+ "indexed": 12,
+ "heldout_images": 5,
+ "heldout_queries": 15,
+ "variants": {
+  "resize50_jpeg35": {
+   "n": 12,
+   "recall_at_1_phash_only": 0.917,
+   "recall_at_1_phash_plus_orb": 0.917,
+   "queries_with_wrong_ids": 0
+  },
+  "jpeg15": {
+   "n": 12,
+   "recall_at_1_phash_only": 0.917,
+   "recall_at_1_phash_plus_orb": 1.0,
+   "queries_with_wrong_ids": 0
+  },
+  "thumbnail256": {
+   "n": 12,
+   "recall_at_1_phash_only": 0.917,
+   "recall_at_1_phash_plus_orb": 0.917,
+   "queries_with_wrong_ids": 0
+  },
+  "centre_crop80": {
+   "n": 12,
+   "recall_at_1_phash_only": 0.917,
+   "recall_at_1_phash_plus_orb": 1.0,
+   "queries_with_wrong_ids": 0
+  },
+  "offcentre_crop60": {
+   "n": 12,
+   "recall_at_1_phash_only": 0.0,
+   "recall_at_1_phash_plus_orb": 0.833,
+   "queries_with_wrong_ids": 0
+  },
+  "screenshot_frame": {
+   "n": 12,
+   "recall_at_1_phash_only": 0.0,
+   "recall_at_1_phash_plus_orb": 0.833,
+   "queries_with_wrong_ids": 0
+  },
+  "caption_banner": {
+   "n": 12,
+   "recall_at_1_phash_only": 0.833,
+   "recall_at_1_phash_plus_orb": 1.0,
+   "queries_with_wrong_ids": 0
+  },
+  "rotate4": {
+   "n": 12,
+   "recall_at_1_phash_only": 0.167,
+   "recall_at_1_phash_plus_orb": 0.917,
+   "queries_with_wrong_ids": 0
+  },
+  "grayscale": {
+   "n": 12,
+   "recall_at_1_phash_only": 1.0,
+   "recall_at_1_phash_plus_orb": 1.0,
+   "queries_with_wrong_ids": 0
+  },
+  "mirror": {
+   "n": 12,
+   "recall_at_1_phash_only": 1.0,
+   "recall_at_1_phash_plus_orb": 1.0,
+   "queries_with_wrong_ids": 0
+  }
+ },
+ "heldout_false_matches": [],
+ "index_ms_per_image": 36.9,
+ "query_ms_p50": 64.1,
+ "query_ms_p95": 172.4,
+ "failures": [
+  {
+   "variant": "resize50_jpeg35",
+   "image": "clock_motion.png",
+   "got": null
+  },
+  {
+   "variant": "thumbnail256",
+   "image": "clock_motion.png",
+   "got": null
+  },
+  {
+   "variant": "offcentre_crop60",
+   "image": "cell.png",
+   "got": null
+  },
+  {
+   "variant": "offcentre_crop60",
+   "image": "clock_motion.png",
+   "got": null
+  },
+  {
+   "variant": "screenshot_frame",
+   "image": "cell.png",
+   "got": null
+  },
+  {
+   "variant": "screenshot_frame",
+   "image": "clock_motion.png",
+   "got": null
+  },
+  {
+   "variant": "rotate4",
+   "image": "clock_motion.png",
+   "got": null
+  }
+ ]
+}

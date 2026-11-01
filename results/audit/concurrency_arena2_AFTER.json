@@ -1,0 +1,226 @@
+{
+ "budget_race": {
+  "attempts": 40,
+  "limit": 20,
+  "granted": 20,
+  "exceptions": [],
+  "file_count": 20,
+  "pass": true
+ },
+ "server": {
+  "n": 8,
+  "total_s": 40.8,
+  "done": 8,
+  "server_peak_rss_mb": 407.4,
+  "jobs": [
+   {
+    "i": 0,
+    "http": 202,
+    "status": "done",
+    "error": null,
+    "states_seen": [
+     "done",
+     "queued",
+     "running"
+    ],
+    "s": 27.4,
+    "verdict": "UNVERIFIED",
+    "slowest": [
+     [
+      "ocr_tesseract",
+      "LOCAL_SUCCESS",
+      4090.3
+     ],
+     [
+      "sanitize_copy",
+      "LOCAL_SUCCESS",
+      169.6
+     ]
+    ],
+    "failed_tools": []
+   },
+   {
+    "i": 1,
+    "http": 202,
+    "status": "done",
+    "error": null,
+    "states_seen": [
+     "done",
+     "queued",
+     "running"
+    ],
+    "s": 18.8,
+    "verdict": "UNVERIFIED",
+    "slowest": [
+     [
+      "ocr_tesseract",
+      "LOCAL_SUCCESS",
+      5378.4
+     ],
+     [
+      "sanitize_copy",
+      "LOCAL_SUCCESS",
+      221.9
+     ]
+    ],
+    "failed_tools": []
+   },
+   {
+    "i": 2,
+    "http": 202,
+    "status": "done",
+    "error": null,
+    "states_seen": [
+     "done",
+     "queued",
+     "running"
+    ],
+    "s": 36.3,
+    "verdict": "UNVERIFIED",
+    "slowest": [
+     [
+      "ocr_tesseract",
+      "LOCAL_SUCCESS",
+      4178.3
+     ],
+     [
+      "sanitize_copy",
+      "LOCAL_SUCCESS",
+      210.4
+     ]
+    ],
+    "failed_tools": []
+   },
+   {
+    "i": 3,
+    "http": 202,
+    "status": "done",
+    "error": null,
+    "states_seen": [
+     "done",
+     "queued",
+     "running"
+    ],
+    "s": 12.8,
+    "verdict": "UNVERIFIED",
+    "slowest": [
+     [
+      "ocr_tesseract",
+      "LOCAL_SUCCESS",
+      5447.6
+     ],
+     [
+      "sanitize_copy",
+      "LOCAL_SUCCESS",
+      179.1
+     ]
+    ],
+    "failed_tools": []
+   },
+   {
+    "i": 4,
+    "http": 202,
+    "status": "done",
+    "error": null,
+    "states_seen": [
+     "done",
+     "queued",
+     "running"
+    ],
+    "s": 23.2,
+    "verdict": "UNVERIFIED",
+    "slowest": [
+     [
+      "ocr_tesseract",
+      "LOCAL_SUCCESS",
+      4320.3
+     ],
+     [
+      "sanitize_copy",
+      "LOCAL_SUCCESS",
+      176.6
+     ]
+    ],
+    "failed_tools": []
+   },
+   {
+    "i": 5,
+    "http": 202,
+    "status": "done",
+    "error": null,
+    "states_seen": [
+     "done",
+     "running"
+    ],
+    "s": 7.2,
+    "verdict": "UNVERIFIED",
+    "slowest": [
+     [
+      "ocr_tesseract",
+      "LOCAL_SUCCESS",
+      5730.6
+     ],
+     [
+      "sanitize_copy",
+      "LOCAL_SUCCESS",
+      355.6
+     ]
+    ],
+    "failed_tools": []
+   },
+   {
+    "i": 6,
+    "http": 202,
+    "status": "done",
+    "error": null,
+    "states_seen": [
+     "done",
+     "queued",
+     "running"
+    ],
+    "s": 32.0,
+    "verdict": "UNVERIFIED",
+    "slowest": [
+     [
+      "ocr_tesseract",
+      "LOCAL_SUCCESS",
+      4155.9
+     ],
+     [
+      "sanitize_copy",
+      "LOCAL_SUCCESS",
+      173.8
+     ]
+    ],
+    "failed_tools": []
+   },
+   {
+    "i": 7,
+    "http": 202,
+    "status": "done",
+    "error": null,
+    "states_seen": [
+     "done",
+     "queued",
+     "running"
+    ],
+    "s": 40.8,
+    "verdict": "UNVERIFIED",
+    "slowest": [
+     [
+      "ocr_tesseract",
+      "LOCAL_SUCCESS",
+      4122.1
+     ],
+     [
+      "sanitize_copy",
+      "LOCAL_SUCCESS",
+      165.6
+     ]
+    ],
+    "failed_tools": []
+   }
+  ],
+  "pass": true
+ }
+}

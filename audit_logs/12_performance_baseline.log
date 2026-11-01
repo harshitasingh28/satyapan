@@ -1,0 +1,8 @@
+text_scam          file None MB  pipeline 0.307 s  cpu 1.182 s  peak RSS 187.4 MB  verdict FAKE  slowest [['rdap', 'BLOCKED', 247.9], ['url_analysis', 'LOCAL_SUCCESS', 58.2], ['pib_release_index', 'LOCAL_SUCCESS', 0.1]]
+image_1mp          file 0.17 MB  pipeline 1.129 s  cpu 1.072 s  peak RSS 187.4 MB  verdict UNVERIFIED  slowest [['ocr_tesseract', 'LOCAL_SUCCESS', 1115.2], ['c2pa', 'LOCAL_SUCCESS', 3.8], ['pib_release_index', 'LOCAL_SUCCESS', 0.2]]
+image_12mp         file 0.9 MB  pipeline 5.479 s  cpu 1.224 s  peak RSS 222.8 MB  verdict UNVERIFIED  slowest [['ocr_tesseract', 'LOCAL_SUCCESS', 5419.9], ['c2pa', 'LOCAL_SUCCESS', 3.9], ['pib_release_index', 'LOCAL_SUCCESS', 0.2]]
+image_39mp         file 2.12 MB  pipeline 11.34 s  cpu 1.133 s  peak RSS 326.8 MB  verdict UNVERIFIED  slowest [['ocr_tesseract', 'LOCAL_SUCCESS', 11151.4], ['c2pa', 'LOCAL_SUCCESS', 7.7], ['pib_release_index', 'LOCAL_SUCCESS', 0.3]]
+video_60s_720p     file 11.8 MB  pipeline 4.647 s  cpu 1.024 s  peak RSS 188.5 MB  verdict UNVERIFIED  slowest [['video_keyframes', 'LOCAL_SUCCESS', 4568.3], ['c2pa', 'LOCAL_SUCCESS', 4.1], ['factcheck_search', 'SKIPPED_NOT_APPLICABLE', 0.0]]
+video_180s_1080p   file 35.48 MB  pipeline 19.57 s  cpu 1.077 s  peak RSS 211.2 MB  verdict UNVERIFIED  slowest [['video_keyframes', 'LOCAL_SUCCESS', 19454.5], ['c2pa', 'LOCAL_SUCCESS', 4.3], ['factcheck_search', 'SKIPPED_NOT_APPLICABLE', 0.0]]
+audio_180s         file 0.87 MB  pipeline 0.049 s  cpu 0.911 s  peak RSS 187.4 MB  verdict UNVERIFIED  slowest [['upload_validation', 'INPUT_ERROR', 0.0], ['factcheck_search', 'SKIPPED_NOT_APPLICABLE', 0.0]]
+saved results/audit/performance_BASELINE.json

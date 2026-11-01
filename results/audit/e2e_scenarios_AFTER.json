@@ -1,0 +1,816 @@
+{
+ "setup": "1 known claims, 2 images, 1 audio clips indexed",
+ "scenarios": [
+  {
+   "id": "A1",
+   "note": "official title plus the official link",
+   "input": {
+    "text": "Government Ensures Continuity of Telecom Connectivity amid Cyclone Arnab. Read: https://pib.gov.in/PressReleaseIframePage.aspx?PRID=2330702"
+   },
+   "ground_truth": "TRUE",
+   "acceptable": [
+    "GENUINE"
+   ],
+   "verdict": "GENUINE",
+   "correct": true,
+   "tool_calls": [
+    [
+     "factcheck_search",
+     "AUTH_REQUIRED",
+     0.1
+    ],
+    [
+     "known_claims_index",
+     "LOCAL_SUCCESS",
+     0.1
+    ],
+    [
+     "pib_release_index",
+     "LOCAL_SUCCESS",
+     0.2
+    ],
+    [
+     "url_analysis",
+     "LOCAL_SUCCESS",
+     0.1
+    ],
+    [
+     "safe_browsing",
+     "AUTH_REQUIRED",
+     0.1
+    ]
+   ],
+   "evidence": [
+    {
+     "id": "E1",
+     "tool": "pib_release_index",
+     "stance": "supports",
+     "strength": "strong",
+     "source": "https://pib.gov.in/PressReleaseIframePage.aspx?PRID=2330702",
+     "established": "An official PIB release matches the claim (88% of claim terms, amounts consistent, links official): 'Government Ensures Continuity of Telecom Connectivity amid Cyclone Arnab'."
+    },
+    {
+     "id": "E2",
+     "tool": "url_analysis",
+     "stance": "supports",
+     "strength": "weak",
+     "source": null,
+     "established": "pib.gov.in is an official government domain (gov.in/nic.in)."
+    }
+   ],
+   "media_assessment": {},
+   "reasons": [
+    "Press Information Bureau release: An official PIB release matches the claim (88% of claim terms, amounts consistent, links official): 'Government Ensures Continuity of Telecom Connectivity amid Cyclone Arnab'. (https://pib.gov.in/PressReleaseIframePage.aspx?PRID=2330702)",
+    "Official domain rule: pib.gov.in is an official government domain (gov.in/nic.in)."
+   ],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 0 from 0 independent source group(s), 0 strong. Supporting evidence: score 4 from 2 group(s), 1 strong. Unavailable tools: factcheck_search, safe_browsing. Evidence strength: high."
+  },
+  {
+   "id": "A2",
+   "note": "paraphrased forward, must not be FAKE",
+   "input": {
+    "text": "Govt says telecom connectivity will continue during Cyclone Arnab, networks are being restored"
+   },
+   "ground_truth": "TRUE",
+   "acceptable": [
+    "GENUINE",
+    "UNVERIFIED"
+   ],
+   "verdict": "UNVERIFIED",
+   "correct": true,
+   "tool_calls": [
+    [
+     "factcheck_search",
+     "AUTH_REQUIRED",
+     0.0
+    ],
+    [
+     "known_claims_index",
+     "LOCAL_SUCCESS",
+     0.1
+    ],
+    [
+     "pib_release_index",
+     "LOCAL_SUCCESS",
+     0.1
+    ]
+   ],
+   "evidence": [],
+   "media_assessment": {},
+   "reasons": [],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 0 from 0 independent source group(s), 0 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Not enough reliable evidence for a verdict. Unavailable tools: factcheck_search. Evidence strength: n/a."
+  },
+  {
+   "id": "B1",
+   "note": "debunk wording as reported by All India Radio (PIB Fact Check, 27 Apr 2026)",
+   "input": {
+    "text": "The government has launched a scheme offering free laptops and is accepting applications for it."
+   },
+   "ground_truth": "FALSE",
+   "acceptable": [
+    "FAKE"
+   ],
+   "verdict": "FAKE",
+   "correct": true,
+   "tool_calls": [
+    [
+     "factcheck_search",
+     "AUTH_REQUIRED",
+     0.0
+    ],
+    [
+     "known_claims_index",
+     "LOCAL_SUCCESS",
+     0.0
+    ],
+    [
+     "pib_release_index",
+     "LOCAL_SUCCESS",
+     0.0
+    ]
+   ],
+   "evidence": [
+    {
+     "id": "E1",
+     "tool": "known_claims_index",
+     "stance": "contradicts",
+     "strength": "strong",
+     "source": "https://newsonair.gov.in/government-denies-launching-any-free-laptop-scheme-or-application-process/",
+     "established": "The claim matches a previously debunked claim (similarity 100.0/100)."
+    }
+   ],
+   "media_assessment": {},
+   "reasons": [
+    "All India Radio News (PIB Fact Check): The claim matches a previously debunked claim (similarity 100.0/100). (https://newsonair.gov.in/government-denies-launching-any-free-laptop-scheme-or-application-process/)"
+   ],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 3 from 1 independent source group(s), 1 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Unavailable tools: factcheck_search. Evidence strength: medium."
+  },
+  {
+   "id": "B2",
+   "note": "paraphrase of the same false claim",
+   "input": {
+    "text": "Free laptop yojana launched by government, applications open now, apply today"
+   },
+   "ground_truth": "FALSE",
+   "acceptable": [
+    "FAKE"
+   ],
+   "verdict": "UNVERIFIED",
+   "correct": false,
+   "tool_calls": [
+    [
+     "factcheck_search",
+     "AUTH_REQUIRED",
+     0.1
+    ],
+    [
+     "known_claims_index",
+     "LOCAL_SUCCESS",
+     0.1
+    ],
+    [
+     "pib_release_index",
+     "LOCAL_SUCCESS",
+     0.0
+    ]
+   ],
+   "evidence": [],
+   "media_assessment": {},
+   "reasons": [],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 0 from 0 independent source group(s), 0 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Not enough reliable evidence for a verdict. Unavailable tools: factcheck_search. Evidence strength: n/a."
+  },
+  {
+   "id": "C1",
+   "note": "no fact-check exists",
+   "input": {
+    "text": "From next month all bank ATMs in Visakhapatnam will close at 6 pm every day"
+   },
+   "ground_truth": "UNRESOLVED",
+   "acceptable": [
+    "UNVERIFIED"
+   ],
+   "verdict": "UNVERIFIED",
+   "correct": true,
+   "tool_calls": [
+    [
+     "factcheck_search",
+     "AUTH_REQUIRED",
+     0.0
+    ],
+    [
+     "known_claims_index",
+     "LOCAL_SUCCESS",
+     0.0
+    ],
+    [
+     "pib_release_index",
+     "LOCAL_SUCCESS",
+     0.0
+    ]
+   ],
+   "evidence": [],
+   "media_assessment": {},
+   "reasons": [],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 0 from 0 independent source group(s), 0 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Not enough reliable evidence for a verdict. Unavailable tools: factcheck_search. Evidence strength: n/a."
+  },
+  {
+   "id": "D1",
+   "note": "lookalike, official name inside another domain",
+   "input": {
+    "text": "PM Kisan: update KYC to receive Rs 6000 at https://pmkisan-gov.in.kyc-verify.top/login"
+   },
+   "ground_truth": "FALSE",
+   "acceptable": [
+    "FAKE"
+   ],
+   "verdict": "FAKE",
+   "correct": true,
+   "tool_calls": [
+    [
+     "factcheck_search",
+     "AUTH_REQUIRED",
+     0.0
+    ],
+    [
+     "known_claims_index",
+     "LOCAL_SUCCESS",
+     0.0
+    ],
+    [
+     "pib_release_index",
+     "LOCAL_SUCCESS",
+     0.0
+    ],
+    [
+     "url_analysis",
+     "LOCAL_SUCCESS",
+     0.3
+    ],
+    [
+     "rdap",
+     "BLOCKED",
+     269.2
+    ],
+    [
+     "safe_browsing",
+     "AUTH_REQUIRED",
+     0.1
+    ],
+    [
+     "urlscan",
+     "SKIPPED_CONSENT",
+     0.0
+    ]
+   ],
+   "evidence": [
+    {
+     "id": "E1",
+     "tool": "url_analysis",
+     "stance": "contradicts",
+     "strength": "strong",
+     "source": null,
+     "established": "The message invokes pm kisan but links to kyc-verify.top, which is not an official domain and imitates one (official_label_in_host)."
+    }
+   ],
+   "media_assessment": {},
+   "reasons": [
+    "Official domain rule: The message invokes pm kisan but links to kyc-verify.top, which is not an official domain and imitates one (official_label_in_host)."
+   ],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 3 from 1 independent source group(s), 1 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Unavailable tools: factcheck_search, rdap, safe_browsing. Evidence strength: medium."
+  },
+  {
+   "id": "D2",
+   "note": "punycode homoglyph xn--uida-o9d.in",
+   "input": {
+    "text": "UIDAI notice: download your e-Aadhaar now at https://xn--uida-o9d.in/download"
+   },
+   "ground_truth": "FALSE",
+   "acceptable": [
+    "FAKE"
+   ],
+   "verdict": "FAKE",
+   "correct": true,
+   "tool_calls": [
+    [
+     "factcheck_search",
+     "AUTH_REQUIRED",
+     0.0
+    ],
+    [
+     "known_claims_index",
+     "LOCAL_SUCCESS",
+     0.0
+    ],
+    [
+     "pib_release_index",
+     "LOCAL_SUCCESS",
+     0.0
+    ],
+    [
+     "url_analysis",
+     "LOCAL_SUCCESS",
+     0.4
+    ],
+    [
+     "rdap",
+     "BLOCKED",
+     258.7
+    ],
+    [
+     "safe_browsing",
+     "AUTH_REQUIRED",
+     0.1
+    ],
+    [
+     "urlscan",
+     "SKIPPED_CONSENT",
+     0.0
+    ]
+   ],
+   "evidence": [
+    {
+     "id": "E1",
+     "tool": "url_analysis",
+     "stance": "contradicts",
+     "strength": "strong",
+     "source": null,
+     "established": "The message invokes aadhaar, uidai but links to xn--uida-o9d.in, which is not an official domain and imitates one (lookalike_of_official_domain)."
+    }
+   ],
+   "media_assessment": {},
+   "reasons": [
+    "Official domain rule: The message invokes aadhaar, uidai but links to xn--uida-o9d.in, which is not an official domain and imitates one (lookalike_of_official_domain)."
+   ],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 3 from 1 independent source group(s), 1 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Unavailable tools: factcheck_search, rdap, safe_browsing. Evidence strength: medium."
+  },
+  {
+   "id": "D3",
+   "note": "redirect target unknown without urlscan",
+   "input": {
+    "text": "Government relief fund: claim Rs 5000 at https://bit.ly/3abcXYZ"
+   },
+   "ground_truth": "UNKNOWN",
+   "acceptable": [
+    "UNVERIFIED"
+   ],
+   "verdict": "UNVERIFIED",
+   "correct": true,
+   "tool_calls": [
+    [
+     "factcheck_search",
+     "AUTH_REQUIRED",
+     0.0
+    ],
+    [
+     "known_claims_index",
+     "LOCAL_SUCCESS",
+     0.1
+    ],
+    [
+     "pib_release_index",
+     "LOCAL_SUCCESS",
+     0.0
+    ],
+    [
+     "url_analysis",
+     "LOCAL_SUCCESS",
+     0.1
+    ],
+    [
+     "rdap",
+     "BLOCKED",
+     227.6
+    ],
+    [
+     "safe_browsing",
+     "AUTH_REQUIRED",
+     0.0
+    ],
+    [
+     "urlscan",
+     "SKIPPED_CONSENT",
+     0.0
+    ]
+   ],
+   "evidence": [],
+   "media_assessment": {},
+   "reasons": [],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 0 from 0 independent source group(s), 0 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Not enough reliable evidence for a verdict. Unavailable tools: factcheck_search, rdap, safe_browsing. Evidence strength: n/a."
+  },
+  {
+   "id": "D4",
+   "note": "Google's Safe Browsing test page",
+   "input": {
+    "text": "Government notice, read at http://testsafebrowsing.appspot.com/s/phishing.html"
+   },
+   "ground_truth": "MALICIOUS_TEST_URL",
+   "acceptable": [
+    "FAKE"
+   ],
+   "verdict": "UNVERIFIED",
+   "correct": false,
+   "tool_calls": [
+    [
+     "factcheck_search",
+     "AUTH_REQUIRED",
+     0.0
+    ],
+    [
+     "known_claims_index",
+     "LOCAL_SUCCESS",
+     0.1
+    ],
+    [
+     "pib_release_index",
+     "LOCAL_SUCCESS",
+     0.0
+    ],
+    [
+     "url_analysis",
+     "LOCAL_SUCCESS",
+     0.1
+    ],
+    [
+     "rdap",
+     "BLOCKED",
+     253.2
+    ],
+    [
+     "safe_browsing",
+     "AUTH_REQUIRED",
+     0.0
+    ],
+    [
+     "urlscan",
+     "SKIPPED_CONSENT",
+     0.0
+    ]
+   ],
+   "evidence": [],
+   "media_assessment": {},
+   "reasons": [],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 0 from 0 independent source group(s), 0 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Not enough reliable evidence for a verdict. Unavailable tools: factcheck_search, rdap, safe_browsing. Evidence strength: n/a."
+  },
+  {
+   "id": "E1",
+   "note": "screenshot of an indexed debunked image",
+   "input": {
+    "files": [
+     "/tmp/satyapan_e2e_work_5e5fi0jh/butterfly_screenshot.jpg"
+    ]
+   },
+   "ground_truth": "REUSED_DEBUNKED_IMAGE",
+   "acceptable": [
+    "FAKE"
+   ],
+   "verdict": "FAKE",
+   "correct": true,
+   "tool_calls": [
+    [
+     "ocr_tesseract",
+     "LOCAL_SUCCESS",
+     932.4
+    ],
+    [
+     "factcheck_search",
+     "SKIPPED_NOT_APPLICABLE",
+     0.0
+    ],
+    [
+     "c2pa",
+     "LOCAL_SUCCESS",
+     3.5
+    ],
+    [
+     "known_media_index",
+     "LOCAL_SUCCESS",
+     32.3
+    ]
+   ],
+   "evidence": [
+    {
+     "id": "E1",
+     "tool": "known_media_index",
+     "stance": "contradicts",
+     "strength": "strong",
+     "source": "https://factcheck.example/audit-image-debunk",
+     "established": "This image matches media from a debunked item KD-E (method orb)."
+    }
+   ],
+   "media_assessment": {
+    "M1": {
+     "kind": "image",
+     "manipulation": "NOT_ASSESSED",
+     "credentials": "none",
+     "provenance": "MATCHES_DEBUNKED_MEDIA"
+    }
+   },
+   "reasons": [
+    "Audit fixture debunk: This image matches media from a debunked item KD-E (method orb). (https://factcheck.example/audit-image-debunk)"
+   ],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 3 from 1 independent source group(s), 1 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Evidence strength: medium."
+  },
+  {
+   "id": "E2",
+   "note": "off-centre crop (60%) of the indexed image",
+   "input": {
+    "files": [
+     "/tmp/satyapan_e2e_work_5e5fi0jh/butterfly_crop.jpg"
+    ]
+   },
+   "ground_truth": "REUSED_DEBUNKED_IMAGE",
+   "acceptable": [
+    "FAKE"
+   ],
+   "verdict": "FAKE",
+   "correct": true,
+   "tool_calls": [
+    [
+     "ocr_tesseract",
+     "LOCAL_SUCCESS",
+     291.7
+    ],
+    [
+     "factcheck_search",
+     "SKIPPED_NOT_APPLICABLE",
+     0.0
+    ],
+    [
+     "c2pa",
+     "LOCAL_SUCCESS",
+     0.9
+    ],
+    [
+     "known_media_index",
+     "LOCAL_SUCCESS",
+     17.5
+    ]
+   ],
+   "evidence": [
+    {
+     "id": "E1",
+     "tool": "known_media_index",
+     "stance": "contradicts",
+     "strength": "strong",
+     "source": "https://factcheck.example/audit-image-debunk",
+     "established": "This image matches media from a debunked item KD-E (method orb)."
+    }
+   ],
+   "media_assessment": {
+    "M1": {
+     "kind": "image",
+     "manipulation": "NOT_ASSESSED",
+     "credentials": "none",
+     "provenance": "MATCHES_DEBUNKED_MEDIA"
+    }
+   },
+   "reasons": [
+    "Audit fixture debunk: This image matches media from a debunked item KD-E (method orb). (https://factcheck.example/audit-image-debunk)"
+   ],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 3 from 1 independent source group(s), 1 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Evidence strength: medium."
+  },
+  {
+   "id": "F1",
+   "note": "manipulated image whose original is not indexed: the system has no manipulation detector",
+   "input": {
+    "files": [
+     "/tmp/satyapan_e2e_work_5e5fi0jh/fruits_spliced.jpg"
+    ]
+   },
+   "ground_truth": "MANIPULATED (copy-move)",
+   "acceptable": [
+    "UNVERIFIED"
+   ],
+   "verdict": "UNVERIFIED",
+   "correct": true,
+   "tool_calls": [
+    [
+     "ocr_tesseract",
+     "LOCAL_SUCCESS",
+     129.9
+    ],
+    [
+     "factcheck_search",
+     "SKIPPED_NOT_APPLICABLE",
+     0.0
+    ],
+    [
+     "c2pa",
+     "LOCAL_SUCCESS",
+     0.7
+    ],
+    [
+     "known_media_index",
+     "LOCAL_SUCCESS",
+     42.7
+    ]
+   ],
+   "evidence": [],
+   "media_assessment": {
+    "M1": {
+     "kind": "image",
+     "manipulation": "NOT_ASSESSED",
+     "credentials": "none",
+     "provenance": "NO_MATCH_IN_INDEX"
+    }
+   },
+   "reasons": [],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 0 from 0 independent source group(s), 0 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Not enough reliable evidence for a verdict. Evidence strength: n/a."
+  },
+  {
+   "id": "F2",
+   "note": "C2PA-signed file with pixels changed after signing",
+   "input": {
+    "files": [
+     "/tmp/satyapan_e2e_work_5e5fi0jh/C_tampered.jpg"
+    ]
+   },
+   "ground_truth": "MANIPULATED AFTER SIGNING",
+   "acceptable": [
+    "UNVERIFIED",
+    "FAKE"
+   ],
+   "verdict": "UNVERIFIED",
+   "correct": true,
+   "tool_calls": [
+    [
+     "ocr_tesseract",
+     "NOT_TESTED",
+     155.4
+    ],
+    [
+     "factcheck_search",
+     "SKIPPED_NOT_APPLICABLE",
+     0.0
+    ],
+    [
+     "c2pa",
+     "LOCAL_SUCCESS",
+     5.3
+    ],
+    [
+     "known_media_index",
+     "LOCAL_SUCCESS",
+     121.2
+    ]
+   ],
+   "evidence": [
+    {
+     "id": "E1",
+     "tool": "c2pa",
+     "stance": "contradicts",
+     "strength": "moderate",
+     "source": null,
+     "established": "Content Credentials signed by C2PA Test Signing Cert fail validation (signingCredential.untrusted, assertion.dataHash.mismatch): the file was changed after it was signed."
+    }
+   ],
+   "media_assessment": {
+    "M1": {
+     "kind": "image",
+     "manipulation": "CREDENTIALS_INVALID",
+     "credentials": "present",
+     "provenance": "NO_MATCH_IN_INDEX"
+    }
+   },
+   "reasons": [
+    "C2PA Content Credentials: Content Credentials signed by C2PA Test Signing Cert fail validation (signingCredential.untrusted, assertion.dataHash.mismatch): the file was changed after it was signed."
+   ],
+   "c2pa_check": "c2pa validation_state seen: ['Invalid'], reported as manipulation evidence: True",
+   "explanation": "Contradicting evidence: score 2 from 1 independent source group(s), 0 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Not enough reliable evidence for a verdict. Evidence strength: n/a."
+  },
+  {
+   "id": "G1",
+   "note": "video containing an indexed debunked image as one scene",
+   "input": {
+    "files": [
+     "/tmp/satyapan_e2e_work_5e5fi0jh/reused.mp4"
+    ]
+   },
+   "ground_truth": "REUSED_DEBUNKED_FRAME",
+   "acceptable": [
+    "FAKE"
+   ],
+   "verdict": "FAKE",
+   "correct": true,
+   "tool_calls": [
+    [
+     "factcheck_search",
+     "SKIPPED_NOT_APPLICABLE",
+     0.0
+    ],
+    [
+     "c2pa",
+     "LOCAL_SUCCESS",
+     0.9
+    ],
+    [
+     "video_keyframes",
+     "LOCAL_SUCCESS",
+     385.7
+    ],
+    [
+     "known_media_index",
+     "LOCAL_SUCCESS",
+     27.6
+    ],
+    [
+     "known_media_index",
+     "LOCAL_SUCCESS",
+     46.6
+    ],
+    [
+     "known_media_index",
+     "LOCAL_SUCCESS",
+     35.1
+    ]
+   ],
+   "evidence": [
+    {
+     "id": "E1",
+     "tool": "known_media_index",
+     "stance": "contradicts",
+     "strength": "strong",
+     "source": "https://factcheck.example/audit-video-frame-debunk",
+     "established": "This image matches media from a debunked item KD-G (method phash+orb)."
+    }
+   ],
+   "media_assessment": {
+    "M1": {
+     "kind": "video",
+     "manipulation": "NOT_ASSESSED",
+     "credentials": "none",
+     "frames": 3,
+     "provenance": "MATCHES_DEBUNKED_MEDIA",
+     "deepfake": "NOT_ASSESSED"
+    }
+   },
+   "reasons": [
+    "Audit fixture debunk: This image matches media from a debunked item KD-G (method phash+orb). (https://factcheck.example/audit-video-frame-debunk)"
+   ],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 3 from 1 independent source group(s), 1 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Evidence strength: medium."
+  },
+  {
+   "id": "H1",
+   "note": "16 kbps Opus excerpt of indexed debunked audio",
+   "input": {
+    "files": [
+     "/tmp/satyapan_e2e_work_5e5fi0jh/speech_excerpt.ogg"
+    ]
+   },
+   "ground_truth": "REUSED_DEBUNKED_AUDIO",
+   "acceptable": [
+    "FAKE"
+   ],
+   "verdict": "FAKE",
+   "correct": true,
+   "tool_calls": [
+    [
+     "factcheck_search",
+     "SKIPPED_NOT_APPLICABLE",
+     0.0
+    ],
+    [
+     "audio_fingerprint",
+     "LOCAL_SUCCESS",
+     81.8
+    ]
+   ],
+   "evidence": [
+    {
+     "id": "E1",
+     "tool": "audio_fingerprint",
+     "stance": "contradicts",
+     "strength": "strong",
+     "source": "https://factcheck.example/audit-audio-debunk",
+     "established": "This audio matches debunked audio KD-H (223 aligned hashes)."
+    }
+   ],
+   "media_assessment": {
+    "M1": {
+     "kind": "audio",
+     "manipulation": "NOT_ASSESSED",
+     "provenance": "MATCHES_DEBUNKED_AUDIO",
+     "voice_authenticity": "UNVERIFIED"
+    }
+   },
+   "reasons": [
+    "Audit fixture debunk: This audio matches debunked audio KD-H (223 aligned hashes). (https://factcheck.example/audit-audio-debunk)"
+   ],
+   "c2pa_check": null,
+   "explanation": "Contradicting evidence: score 3 from 1 independent source group(s), 1 strong. Supporting evidence: score 0 from 0 group(s), 0 strong. Evidence strength: medium."
+  }
+ ]
+}

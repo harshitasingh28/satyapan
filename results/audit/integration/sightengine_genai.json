@@ -1,0 +1,33 @@
+{
+ "test": "sightengine_genai",
+ "run_at": "2026-10-30T21:39:43+00:00",
+ "host": "vm",
+ "status": "BLOCKED",
+ "request_sent": true,
+ "genuine_external": false,
+ "error": "network: 403 Forbidden",
+ "http_status": null,
+ "elapsed_ms": 2535.0,
+ "calls": [
+  {
+   "tool": "sightengine_genai",
+   "method": "POST",
+   "url": "https://api.sightengine.com/1.0/check.json",
+   "http_status": null,
+   "ms": 255.7,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "sightengine_genai",
+   "method": "POST",
+   "url": "https://api.sightengine.com/1.0/check.json",
+   "http_status": null,
+   "ms": 249.8,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  }
+ ]
+}

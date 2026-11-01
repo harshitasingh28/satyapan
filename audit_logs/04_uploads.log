@@ -1,0 +1,10 @@
+### OCR noise on plain photos -> claims?
+59c68cfb7a40.json claim: 'A ey, గ్\u200c a జే రా दर हि IS ZZ tit.'
+### oversize upload (60 MB) 21:23:52Z
+{"detail":"big.png: file too large"}  HTTP 413 0.332974s
+### server temp files during a 300 MB upload (does the body get buffered before our limit?)
+huge upload HTTP 413 body {"detail":"huge.bin: file too large"}
+uvicorn peak RSS during upload: 214 MB
+### Content-Length lie: claim 1 GB, send nothing
+HTTP 000
+curl ended (timeout means the server waited)

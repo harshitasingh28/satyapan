@@ -1,0 +1,14 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+data/
+results/eval_*/
+integration_results/
+tests/media/
+frontend/node_modules/
+frontend/.next/
+frontend/.env*.local
+frontend/test-results/
+frontend/playwright-report/
+results/bakeoff/

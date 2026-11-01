@@ -1,0 +1,2880 @@
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/README.md satyapan-feasibility/README.md
+--- /home/claude/satyapan-feasibility/README.md	2026-10-30 20:46:03.450704398 +0000
++++ satyapan-feasibility/README.md	2026-10-30 22:27:33.054228280 +0000
+@@ -4,16 +4,16 @@
+ 
+ Code decides the verdict. Language models never supply evidence.
+ 
+-## Honest status (31 Oct 2026)
++## Honest status (31 Oct 2026, after the end-to-end audit in docs/FINAL_TEST_AUDIT.md)
+ 
+ | Area | Status |
+ |---|---|
+-| Local tests | **66 passed, 0 failed, 0 skipped** (`python -m pytest`), on real public media |
+-| Image, video and audio reuse matching | Measured locally (docs/TEST_RESULTS.md). Thresholds tuned on the same small set, so treat as a smoke test |
++| Local tests | **95 passed, 0 failed, 0 skipped** (`python -m pytest`), including 29 regression tests for the 23 bugs the audit found and fixed |
++| Image, video and audio reuse matching | Held-out image set (never tuned on): precision 0.945, recall 0.970. **But 42% false matches on different photos of the same scene**, and crops and screenshots stop matching above 250 indexed images (docs/FINAL_TEST_AUDIT.md, section E) |
+ | External APIs | **Not one live success yet.** Our build workspace blocks the internet. Run `python -m integration.run_all` on your MacBook |
+ | Deepfake detection | **Not claimed.** Reuse, credentials and calibrated signals only (docs/MEDIA_FORENSICS.md) |
+ | Evaluation dataset | Planned (100 items, 30 dev and 70 test) with validator, runner and metrics. **Not collected, so no accuracy is claimed** |
+-| Recommendation | **CONDITIONAL GO** (docs/FINAL_REPORT.md) |
++| Recommendation | **CONDITIONAL GO** (docs/FINAL_TEST_AUDIT.md, section M) |
+ 
+ ## Setup on a MacBook Air
+ 
+@@ -22,7 +22,9 @@
+ # 2. From the project folder:
+ bash scripts/setup_macos.sh            # installs python@3.12, ffmpeg, tesseract + Hindi/Telugu, venv, test media
+ source .venv/bin/activate
+-python -m pytest                       # expect 66 passed
++python -m pytest                       # expect 95 passed
++bash scripts/run_local_tests.sh        # every local test, logs in results/audit/run_<time>/
++bash scripts/run_integration_tests.sh  # LIVE API checks (needs .env keys)
+ ```
+ 
+ Fill `.env`. Every key is optional, and missing keys show as AUTH_REQUIRED.
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/docs/ARCHITECTURE.md satyapan-feasibility/docs/ARCHITECTURE.md
+--- /home/claude/satyapan-feasibility/docs/ARCHITECTURE.md	2026-10-30 20:42:06.682690324 +0000
++++ satyapan-feasibility/docs/ARCHITECTURE.md	2026-10-30 22:27:33.055800577 +0000
+@@ -54,16 +54,22 @@
+ | Fact-check from a listed fact-checker, rated false or misleading, similarity at least 85 | contradicts, strong (moderate if the publisher is not in `factcheckers.txt`, weak if similarity is 70 to 85) |
+ | Match in our known-debunk text index, similarity at least 85 | contradicts, strong |
+ | Image or audio matches media from a known debunk | contradicts, strong |
+-| Message invokes government or a scheme and links to a non-official domain that imitates one | contradicts, strong |
+-| Same, without imitation, but the message asks people to act through the link | contradicts, moderate |
++| Message invokes government or a scheme and links to a non-official domain that imitates a SPECIFIC official one (official domain inside another host, close lookalike or homoglyph, an official name such as `pmkisan` as a label part, an official name in userinfo or behind a backslash trick) | contradicts, strong |
++| Same, with only a generic signal ("gov" in a non-gov.in name, an official name as a fragment, a punycode host that is not a close lookalike) | contradicts, moderate |
++| Same, without any imitation signal, but the message asks people to act through the link (click, register, apply now, KYC, OTP; not "share" or "forward") | contradicts, weak |
++| Foreign government domains (`state.gov`, `gov.uk`) | flagged as foreign government, never as impersonation |
+ | Safe Browsing advisory, or urlscan malicious verdict | contradicts, strong |
+ | C2PA says generative AI was used | contradicts, moderate |
++| C2PA credentials present but fail validation (file changed after signing) | contradicts, moderate |
+ | Domain registered less than 90 days ago, or not registered at all | contradicts, weak |
+ | AI-image score at least 0.9, **only if the detector passed calibration** | contradicts, weak (otherwise neutral) |
+-| PIB release matches at least 70% of claim terms, amounts agree, all links official | supports, strong |
++| PIB release matches at least 70% of claim terms, amounts agree exactly (numbers compared as values, so Rs 200 never matches Rs 2000, and lakh and crore count), English and numeric dates agree, all links official and none redirects elsewhere | supports, strong |
++| Link on an official domain that carries a redirect to another site (`?url=`, `next=`) | contradicts, moderate. The target is analysed as its own link |
+ | A related PIB release with different details | neutral (shown as context, never as confirmation) |
+ | Link is on gov.in, nic.in or the allowlist | supports, weak |
+ 
++All lexical link rules share one independence key (`url_rules`): two suspicious links in one message are one source, not two.
++
+ Rules (`pipeline/verdict.py`):
+ - **FAKE:** contradiction score at least 3 and no strong support.
+ - **GENUINE:** strong support and zero contradiction.
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/docs/FINAL_REPORT.md satyapan-feasibility/docs/FINAL_REPORT.md
+--- /home/claude/satyapan-feasibility/docs/FINAL_REPORT.md	2026-10-30 20:45:46.862703412 +0000
++++ satyapan-feasibility/docs/FINAL_REPORT.md	2026-10-30 22:27:33.055318682 +0000
+@@ -1,5 +1,7 @@
+ # Satyapan feasibility audit: final report
+ 
++> **Audit update (31 Oct 2026).** An end-to-end audit found and fixed 23 bugs after this page was written. Where this page and `docs/FINAL_TEST_AUDIT.md` disagree, the audit is right.
++
+ 31 Oct 2026. Everything below separates what we **ran**, what we **read**, and what we **estimate**.
+ 
+ ## 1. Critical evaluation of the idea
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/docs/FINAL_TEST_AUDIT.md satyapan-feasibility/docs/FINAL_TEST_AUDIT.md
+--- /home/claude/satyapan-feasibility/docs/FINAL_TEST_AUDIT.md	1970-01-01 00:00:00.000000000 +0000
++++ satyapan-feasibility/docs/FINAL_TEST_AUDIT.md	2026-10-30 22:52:03.199295659 +0000
+@@ -0,0 +1,658 @@
++# Satyapan: complete end-to-end testing and independent verification
++
++Audit round of 30 to 31 Oct 2026 (UTC). The goal was to break Satyapan, not to praise it.
++Every number below comes from a log or JSON file in `results/audit/` or `audit_logs/`.
++The reference run for "after" figures is `results/audit/run_20261030T222654Z/`, made with
++`bash scripts/run_local_tests.sh` on the final code (its `SUMMARY.txt` lists every step). Its
++security step was rerun once after a bug in the audit script was fixed (section H). An
++independent fact-checking agent compared this report with the raw files, and the 12 problems
++it found were corrected before delivery.
++Where something could not be run, it says NOT_TESTED or BLOCKED and gives the reason.
++
++**Verdict of this audit: CONDITIONAL GO** (section M). 23 bugs were found and fixed. 7 of
++them produced a false accusation or a false reassurance in a test (K1, K2, K3, K18, K21, K22, K23),
++2 more hid real evidence (K6, K20), and 1 made every concurrent investigation fail (K9). An independent tester who never saw the
++code still found 6 failures on first contact, which is the best measure of how much is still
++unknown. No external API has been verified live, the dataset does not exist yet, and image
++reuse matching gives false matches on different photos of the same scene.
++
++Contents: A Environment, B Test suite audit, C Live APIs, D End-to-end scenarios,
++E Image matching, F Deepfake and synthetic media, G Verdict engine, H Security,
++I Performance, J Dataset and leakage, K Critical bugs and fixes, L Remaining blockers,
++M Final recommendation. Appendices: exact commands, files changed.
++
++---
++
++## A. Environment
++
++| Item | Value |
++|---|---|
++| Source | `satyapan-feasibility.zip`, SHA-256 `157e30f7ee9cdce1f06c45f08ea91ed867e7f461acc1297cbb16cf58daff4ed5`, extracted fresh |
++| Machine | Cloud workspace: Ubuntu 24.04.5 LTS, Linux 6.18 x86_64, **2 vCPU, 8 GB RAM**. Not a MacBook |
++| Python | 3.12.3 in a new venv (`python3.12 -m venv .venv`) |
++| Install | the steps of `scripts/setup_macos.sh` without Homebrew: `pip install -r requirements.txt -r requirements-dev.txt`, then `python scripts/fetch_test_media.py`. `pip check`: no broken requirements |
++| Native tools | Tesseract 5.3.4 (eng, hin, tel), FFmpeg 6.1.1 |
++| Network | Outbound traffic goes through an egress proxy that allows PyPI and GitHub raw files only. **Every API host is refused with HTTP 403 by the proxy.** No live API test was possible here |
++| Exact versions | `audit_logs/requirements.lock.txt` (72 packages, `pip freeze`) |
++
++**Finding A1: requirements are not pinned.** A fresh install on 30 Oct 2026 pulled
++pillow 13.0.0, numpy 2.5.4, starlette 1.10.0, fastapi 0.162.0, opencv-python-headless
++5.0.0.93 and c2pa-python 0.38.1. Everything passed with these versions, but a team
++member installing next week can get different ones. Use the lock file for the demo
++machine: `pip install -r audit_logs/requirements.lock.txt`.
++
++**Clean-room check of the delivered ZIP:** extracted into an empty folder, new venv,
++`pip install -r audit_logs/requirements.lock.txt`, `python scripts/fetch_test_media.py`, then
++95 of 95 tests, 16 of 16 adversarial cases and 25 of 25 independent cases passed
++(`audit_logs/37_clean_room_zip_check.log`).
++
++Logs: `audit_logs/00_environment.log`, `audit_logs/01_setup.log`, and `env.txt` in every
++`results/audit/run_*` folder (OS, CPUs, memory, Python, Tesseract languages, FFmpeg,
++`pip freeze`, and the NAMES of configured keys, never their values).
++
++---
++
++## B. Test suite audit
++
++### B1. The 66 tests exist and run
++
++`python -m pytest -o addopts="" -q` on the untouched code: **66 collected, 66 passed,
++0 skipped, 0 failed, in 10.0 s** (`audit_logs/02_pytest_baseline_full.log`).
++Nothing was skipped because the test media and Tesseract language data were fetched first.
++Without them, media tests SKIP with a reason (`tests/conftest.py`, `need()`), they never pass silently.
++
++### B2. What the 66 tests really are
++
++| Observation | Detail | Risk |
++|---|---|---|
++| 66 tests, **41 distinct functions** | `test_rejects_unsafe_urls` is 18 parametrised cases, `test_verdict_rules` 7, `test_status_mapping` 3 | The count overstates coverage |
++| Graph tests use a **mocked offline transport** | Every external call fails on purpose. Correct for degradation tests, labelled in the docstring | They cannot show that live evidence is parsed correctly |
++| Status mapping and `guarded_fetch` tests are **mocked** | Fake responses and a fake resolver | Logic only. The live DNS-rebinding path is untested |
++| Decompression-bomb test uses an **81 MP** image | Pillow raises only above 2x the 40 MP limit | It hid the 40 to 80 MP gap (bug K10) |
++| `test_api` makes **real network calls** (RDAP) and accepts `FAKE` or `UNVERIFIED` | Result depends on the network of the machine | Not deterministic, weak assertion |
++| No contract tests for the response parsers | factcheck, safebrowsing, rdap, urlscan, sightengine, vision | A changed API field would only show up live |
++| Missing areas | retention, the 413 path, concurrency, audio-index persistence, key redaction in stored reports | Every one of these hid a real bug (section K) |
++| No test is labelled LIVE | Correct. Live checks live only in `integration/run_all.py` | None |
++
++### B3. After this round
++
++`tests/test_audit_regressions.py` adds **29 tests**, one or more per bug in section K.
++Full suite after the fixes: **95 collected, 95 passed** (70 distinct functions). To prove
++that the new tests detect the bugs rather than pass trivially, they were also run against
++the ORIGINAL code: 28 of 29 fail there, as they should
++(`audit_logs/27_regression_tests_before_after.log`). The one that passes on both versions,
++`test_k4_rating_words_from_the_evidence_are_allowed`, is a guard against over-correction.
++`test_k9_ocr_keeps_a_caption_next_to_a_photo` guards the new OCR gate itself (the original
++code had no gate).
++
++---
++
++## C. Live APIs
++
++**No external API was tested live from this workspace.** Two real runs of
++`python -m integration.run_all` were made (`audit_logs/15_integration_baseline.log`,
++`results/audit/integration/`):
++
++* Run A, no keys: key-based tests were not sent (AUTH_REQUIRED). Keyless requests were
++  sent and refused by the workspace proxy (BLOCKED, HTTP 403 from the proxy, not from the service).
++* Run B, placeholder keys and `--allow-third-party`: every request was sent and refused
++  by the proxy (BLOCKED). The services never saw them.
++
++The latencies in those logs (about 2.5 s, 7.5 s for the three PIB feeds) are the
++proxy's refusal time. **They are not API latencies and must not be quoted as such.**
++
++| API | Endpoint used by the code | Auth | Status here | What the live test checks (on your Mac) |
++|---|---|---|---|---|
++| Fact Check Tools, claims | `GET factchecktools.googleapis.com/v1alpha1/claims:search` | API key | AUTH_REQUIRED, then BLOCKED | a known false claim returns `claims[].claimReview[]` with publisher, URL, rating, date |
++| Fact Check Tools, image | `GET .../v1alpha1/claims:imageSearch` | API key | AUTH_REQUIRED, then BLOCKED | a public image URL returns `results[]` |
++| Safe Browsing v5 | `GET safebrowsing.googleapis.com/v5/urls:search?urls=...` | API key | AUTH_REQUIRED, then BLOCKED | Google's test URL `testsafebrowsing.appspot.com/s/phishing.html` is listed, `india.gov.in` is not |
++| Safe Browsing v4 (fallback) | `POST .../v4/threatMatches:find` | API key | AUTH_REQUIRED, then BLOCKED | same pair of URLs |
++| RDAP, including `.in` | IANA bootstrap `data.iana.org/rdap/dns.json`, then the registry | none | BLOCKED | bootstrap loads, `uidai.gov.in` returns a registration date from the `.in` registry |
++| Wikidata SPARQL | `GET query.wikidata.org/sparql` | none (User-Agent) | BLOCKED | an official body returns its P856 website |
++| PIB RSS | three feed variants (English documented, English variant, Hindi) | none | BLOCKED | items parse, and the test reports the SCRIPT of the titles and whether `pubDate` exists, because an earlier probe saw Hindi titles on the English URL and no dates |
++| urlscan.io | `GET /user/quotas/`, `POST /api/v1/scan` (unlisted), poll result | API-Key header | AUTH_REQUIRED / NOT_TESTED, then BLOCKED | quota read, then a consented scan of `https://example.com` |
++| Sightengine `genai` | `POST api.sightengine.com/1.0/check.json` | user + secret | NOT_TESTED, then BLOCKED | a public test image returns `type.ai_generated` |
++| Cloud Vision Web Detection | `POST vision.googleapis.com/v1/images:annotate` | billing account | NOT_TESTED (run A, third-party upload not allowed), AUTH_REQUIRED (run B, not configured) | matching pages for a public image. **Cloud Vision OCR is not implemented.** OCR is local Tesseract |
++| C2PA (local library) | c2pa-python 0.38.1 | none | **LOCAL_SUCCESS** | valid file (C.jpg, `Valid`, test signer), missing (A.jpg, `none`), modified (C.jpg with 20 bytes of image data changed, `Invalid`, codes `assertion.dataHash.mismatch`) |
++
++The Safe Browsing reference was re-checked during the audit. Both
++`v5/urls:search` and `v5alpha1/urls:search` are documented, the URL parameter is
++repeated (`urls`), at most 50 URLs per call, the API is for non-commercial use, and
++`urls.search` sends raw URLs to Google (`hashes.search` sends 4-byte hash prefixes).
++If v5 returns an error, the code falls back to v4.
++
++Free tiers, quotas and terms are in `docs/API_SOURCES.md` with their source pages.
++**Cost:** everything used in the demo is free except Cloud Vision, which needs billing
++(first 1,000 units a month free, per its pricing page). Daily budgets cap Sightengine
++(80 calls), Vision (30) and urlscan (100) below their free limits.
++
++**Exact command to run on the MacBook** (needs `.env` with the keys named in the script header):
++
++```bash
++bash scripts/run_integration_tests.sh                       # reads only
++bash scripts/run_integration_tests.sh --allow-third-party   # also sends PUBLIC test data
++```
++
++Results land in `results/audit/integration_<UTC time>/` with one JSON per API (status,
++HTTP code, latency, response field names, redacted error) and a `SUMMARY.md`.
++Rate-limit and auth-error behaviour can only be observed there: the code maps 401 and 403
++to AUTH_REQUIRED, 429 after retries to RATE_LIMITED, 5xx and timeouts to SERVICE_ERROR.
++
++---
++
++## D. End-to-end scenarios A to H
++
++`audit/e2e_scenarios.py` runs the real pipeline (`Context.default()`, the same code path
++as the API) on 15 inputs. The known-debunk index is built with the real
++`scripts/build_known_index.py`. Fixtures:
++
++* B: one REAL debunk, "The government has launched a scheme offering free laptops and is
++  accepting applications for it", PIB Fact Check as reported by All India Radio,
++  https://newsonair.gov.in/government-denies-launching-any-free-laptop-scheme-or-application-process/
++* A: one REAL PIB release, "Government Ensures Continuity of Telecom Connectivity amid
++  Cyclone Arnab", https://pib.gov.in/PressReleaseIframePage.aspx?PRID=2330702
++* E, G, H: public test media registered as debunked items. These are **fixtures for the
++  matching logic, not real debunks.**
++
++No keys were configured in these runs. Key-based APIs (Fact Check, Safe Browsing) were therefore
++NOT called and are recorded as AUTH_REQUIRED. Keyless RDAP was called and refused by the proxy (BLOCKED).
++
++| ID | Input | Ground truth | Before | After | Correct | Evidence that decided it, or why it failed |
++|---|---|---|---|---|---|---|
++| A1 | official release title plus the official PIB link | TRUE | GENUINE | GENUINE | yes | PIB release index (strong support), official link (weak support) |
++| A2 | paraphrased forward of the same release | TRUE | UNVERIFIED | UNVERIFIED | yes (abstains) | overlap below 70%, nothing else |
++| B1 | the debunk wording | FALSE | FAKE | FAKE | yes | known-debunk index (strong) |
++| B2 | "Free laptop yojana launched by government, applications open now, apply today" | FALSE | UNVERIFIED | UNVERIFIED | **no** | lexical similarity below 85. Paraphrase matching is a known limit, and live Fact Check search was unavailable |
++| C1 | ATM closing rumour, no fact-check exists | UNRESOLVED | UNVERIFIED | UNVERIFIED | yes | nothing found, correctly no verdict |
++| D1 | `https://pmkisan-gov.in.kyc-verify.top/...` | FALSE | FAKE | FAKE | yes | official name inside another domain (strong) |
++| D2 | `https://xn--uida-o9d.in/` (homoglyph of uidai) | FALSE | FAKE | FAKE | yes | lookalike via homoglyph skeleton (strong) |
++| D3 | `bit.ly` link, government relief claim | UNKNOWN | UNVERIFIED | UNVERIFIED | yes | redirect target unknown without urlscan |
++| D4 | Google's Safe Browsing phishing test URL | MALICIOUS | UNVERIFIED | UNVERIFIED | **no** | needs Safe Browsing, BLOCKED here. Expected to pass live, NOT verified |
++| E1 | screenshot of an indexed debunked image | REUSED | FAKE | FAKE | yes | known-media match, ORB (strong) |
++| E2 | off-centre 60% crop of it | REUSED | FAKE | FAKE | yes | known-media match, ORB (strong) |
++| F1 | copy-move splice of an image NOT in the index | MANIPULATED | UNVERIFIED | UNVERIFIED | yes (abstains) | no manipulation detector exists. Correctly no claim |
++| F2 | C2PA-signed file changed after signing | MANIPULATED | UNVERIFIED, credentials reported as neutral | UNVERIFIED, credentials reported as **failing validation** (moderate) | **fixed** (K5) | `assertion.dataHash.mismatch` |
++| G1 | slideshow video with the debunked image as one scene | REUSED | FAKE | FAKE | yes | keyframe matched the index (pHash and ORB) |
++| H1 | 16 kbps Opus excerpt of indexed debunked audio | REUSED | UNVERIFIED | FAKE | **fixed** (K6) | audio index was never saved before the fix |
++
++**Result: 11 of 15 before, 13 of 15 after.** The two failures left are a lexical limit (B2)
++and a missing live API (D4). Full records with every tool call:
++`results/audit/e2e_scenarios_BASELINE.json`, `results/audit/e2e_scenarios_AFTER.json`, and the
++latest `results/audit/run_*/e2e_scenarios.json`.
++
++---
++
++## E. Image matching (reuse only)
++
++This section measures **reuse matching**: is this image a copy of an image in our index of
++debunked media. It says nothing about manipulation or AI generation (section F).
++
++**Method.** `audit/image_eval.py`, thresholds frozen and written into each result file
++(MIN_INLIERS 25, MIN_INLIER_RATIO 0.30, MIN_SPREAD 0.10, MAX_ANISOTROPY 3, crop scales 1.0, 0.9, 0.8).
++
++* **Dev set:** 12 scikit-image photos plus 5 negatives. The shipped thresholds were tuned on
++  these, so dev numbers are optimistic by construction.
++* **Held-out set:** 51 OpenCV sample images at tag 4.10.0, fetched with SHA-256 checks by
++  `scripts/fetch_heldout_images.py`. **Never used to tune anything.** 22 images are indexed.
++  Negatives: 9 HARD (different photos of an indexed scene or object: aero3, graf3, left02 to
++  left07, Blender_Suzanne2) and 8 easy, each queried as original, resized, JPEG 30 and screenshot.
++  Excluded with reasons in the file: consecutive video frames (label ambiguous), box.png.
++* Transforms per indexed image: original, resize 50%, JPEG quality 30, centre crop 70%,
++  off-centre crop 55% (bottom right), screenshot with app bar, margins and text, tiled
++  watermark, Gaussian blur 2.5, rotation 7 and 15 degrees, screenshot plus resize plus
++  JPEG 50, mirror. Plus one natural crop shipped with OpenCV (lena_tmpl).
++* Scoring: TP top-1 is the true source, FN nothing matched, WRONG another indexed image
++  (counted as FN and FP), FP any match on a negative, TN no match.
++
++| Set | Positives | Negatives | TP | FN | Wrong | FP | TN | Precision | Recall | F1 | FPR |
++|---|---|---|---|---|---|---|---|---|---|---|---|
++| Dev (tuned) | 144 | 20 | 140 | 4 | 0 | 0 | 20 | 1.000 | 0.972 | 0.986 | 0.000 |
++| **Held-out** | 265 | 68 | 257 | 8 | 0 | 15 | 53 | **0.945** | **0.970** | 0.957 | **0.221** |
++
++Held-out, 95% Wilson intervals: recall 0.942 to 0.985, precision 0.911 to 0.966,
++FPR 0.138 to 0.333. The positives are 12 transforms of 22 images, not independent samples,
++so the true uncertainty is wider than these intervals.
++
++| Held-out negatives | FP | TN | FPR |
++|---|---|---|---|
++| Hard (same scene or object, different photo) | 15 | 21 | **0.417** (Wilson 0.271 to 0.578) |
++| Easy (unrelated images) | 0 | 32 | 0.000 (upper bound 0.094 by the rule of three) |
++
++Per-transform recall on held-out: 100% for original, resize, JPEG 30, centre crop,
++screenshot, watermark, blur, both rotations and mirror. **Off-centre 55% crop 72.7%**
++(16 of 22), screenshot plus resize plus JPEG 90.9%, natural crop 1 of 1.
++Query time with 22 items: p50 95.6 ms, p95 282.3 ms (reference run).
++
++**What the false positives are.** 8 by ORB (graf3 matched graf1, the same graffiti wall from
++another angle, Blender_Suzanne2 matched Suzanne1) and 7 by pHash at distance 0 (left04, 05
++and 07 matched left01: different photos of the same chessboard). **The matcher detects "same
++scene", not "same photograph".** For Satyapan that matters: a known-media match is STRONG
++evidence, so a new, genuine photo of a place that appeared in an old debunk can be labelled
++FAKE. This is a blocker (L3). It was not fixed in this round, because fixing it needs a dev
++set with hard negatives and then a fresh held-out set. Tuning on these held-out images would
++have made the held-out numbers meaningless.
++
++**Index size cliff** (`audit/index_scaling.py`, reference run `scaling.log`, an earlier run in `audit_logs/26_index_scaling.log` agrees). The code
++verifies every indexed image with ORB only while the index has at most 250 items. Above that,
++ORB runs only on pHash candidates:
++
++| Index items | ORB on every item | Query p50 | Resize 50% | Centre crop 70% | Off-centre crop 55% | Screenshot |
++|---|---|---|---|---|---|---|
++| 22 | yes | 74 ms | 100% | 100% | 72.7% | 100% |
++| 100 | yes | 235 ms | 100% | 100% | 72.7% | 100% |
++| 250 | yes | 584 ms | 100% | 100% | 72.7% | 100% |
++| **251** | **no** | 58 ms | 100% | **27.3%** | **0%** | **0%** |
++| 400 | no | 83 ms | 100% | 27.3% | 0% | 0% |
++
++With more than 250 debunked images in the index, screenshots and crops of them are no longer
++found. Keep the demo index under 250 images, or raise `orb_all_below` and accept about 2.3 ms
++per item per query on this machine (L4).
++
++---
++
++## F. Deepfake and synthetic-media capabilities
++
++| Capability | What exists | Tested how | Claimable at the demo? |
++|---|---|---|---|
++| Image reuse (old image, new claim) | pHash, dHash, ORB plus RANSAC against the debunk index | Section E | Yes, as "reuse of a known debunked image", with the same-scene caveat |
++| Video reuse | FFmpeg keyframes, each frame through the image index | G1 | Yes, same caveat. Only reused frames, not edits |
++| Audio reuse | Landmark fingerprints | H1 (16 kbps Opus excerpt matched). 170 s clip: index 0.8 to 1.1 s, query 0.8 to 1.1 s over two runs | Yes, as reuse of known audio |
++| Image manipulation (splice, copy-move, inpainting) | **Nothing** | F1 abstains correctly | **No** |
++| C2PA Content Credentials | Signer, validation state, AI declaration, and now validation failures | Valid, missing and modified files | Yes. Missing credentials prove nothing (messaging apps strip them) |
++| AI-generated image detection | Sightengine `genai`, off without consent, evidence only if `AI_IMAGE_DETECTOR_CALIBRATED=1` | NOT_TESTED (blocked). Never calibrated | **No.** The score is now hidden until calibration (K17) |
++| Voice cloning | Always UNVERIFIED with a stated limitation | Unit test | **No** |
++| Video deepfakes (face swap, lip sync) | **Nothing** | n/a | **No** |
++
++**Reuse matching is not deepfake detection** and the report text never calls it that.
++Rename the T1-D pitch line accordingly: "provenance and reuse audit", not "deepfake detector".
++
++---
++
++## G. Verdict engine
++
++### G1. Properties checked
++
++| Property | How it was checked | Result |
++|---|---|---|
++| Every reason statement cites evidence ids that exist | citation validator, unit tests, LLM attack | Holds |
++| Citations are real sources | statements are built from retrieved evidence, URLs not in the evidence are removed | Holds. Fixture sources are labelled FIXTURE |
++| Reliability ranking | strong 3, moderate 2, weak 1, items sharing an independence key count once | Holds after K2. Before it, every suspicious link counted as a separate source |
++| Conflicting evidence gives UNVERIFIED | unit test of `resolve_conflict` | Holds |
++| One weak source cannot make FAKE | FAKE needs a score of at least 3 | Holds. Before K2, two moderate lexical items on two news links reached 4 and gave FAKE |
++| Missing evidence gives UNVERIFIED | ADV08, ADV09, C1 | Holds |
++| An API failure creates no evidence | every offline run checks that no evidence comes from an external tool | Holds in all 16 adversarial runs and all e2e runs |
++| The LLM cannot invent sources, numbers or conclusions | local fake LLM (`audit/llm_injection.py`) | Before: a statement saying "This message is genuine and safe to share" survived. After K4: removed |
++| No uncalibrated probability shown | read every place a score reaches the report | Before: the raw Sightengine score was shown in the evidence text and media assessment. After K17: hidden until calibrated. Verdict strength is only "high" or "medium", never a percentage |
++
++### G2. Adversarial verdict attacks
++
++`audit/adversarial_verdicts.py`, network forced off, so only local evidence counts.
++
++| ID | Attack | Before | After |
++|---|---|---|---|
++| ADV01 | genuine MyGov message (`mygov.in`) | **FAKE** (false accusation) | UNVERIFIED |
++| ADV02 | genuine news forward, two news links, "share" | **FAKE** | UNVERIFIED |
++| ADV03 | a correct debunk being shared | UNVERIFIED | UNVERIFIED |
++| ADV04 | US government site `travel.state.gov` | **FAKE** | UNVERIFIED |
++| ADV05 | Rs 200 against an official Rs 2000 release | **GENUINE** (false reassurance) | UNVERIFIED |
++| ADV06 | prompt injection in the message, no LLM | FAKE | FAKE |
++| ADV07 | `https://pib.gov.in@evil-relief.top/` | UNVERIFIED | FAKE |
++| ADV08 | shortener only | UNVERIFIED | UNVERIFIED |
++| ADV09 | local rumour, no evidence | UNVERIFIED | UNVERIFIED |
++| ADV10 | official message with official link only | UNVERIFIED | UNVERIFIED |
++| ADV11 | homoglyph of pib, Cyrillic i (`xn--pb-hoc.in`) | see note | FAKE |
++| ADV12 | Hindi paraphrase of an official release | GENUINE | GENUINE |
++| ADV13 | punycode that is NOT a close lookalike (`xn--pb-lmc.in`, "pрb") | (new) | UNVERIFIED |
++| ADV14 | backslash trick `http://x.com\@pib.gov.in/` | (new) | FAKE |
++| ADV15 | generic "gov" name `pm-relief-gov.top` | (new) | UNVERIFIED |
++| ADV16 | UK government site `gov.uk` | (new) | UNVERIFIED |
++
++Before: **8 of 12** behaved acceptably (3 false accusations, 1 false reassurance). After:
++**16 of 16.** Note on ADV11: the first run used `xn--pb-lmc.in`, which decodes to "pрb"
++(Cyrillic er), not the Cyrillic i the case described. That was an error in the audit
++script, found while fixing. It was corrected and the old input kept as ADV13.
++
++**Honest caveat.** The fixes were developed against ADV01 to ADV12, so 16 of 16 is a
++regression result, not an accuracy estimate. An independent tester that never saw these
++cases or the code wrote its own attacks (G3).
++
++**Trade-off accepted.** `pm-relief-gov.top` (ADV15) was FAKE before because any "gov" in a
++non-gov.in name counted as strong impersonation. That same rule accused mygov.in and
++state.gov. Now a generic "gov" is moderate, so this scam is UNVERIFIED offline and needs a
++second signal (a domain under 90 days old or unregistered from RDAP, a Safe Browsing hit) to
++become FAKE. A wrong FAKE on a genuine government message is the worse failure for a
++verification tool, so this is the right trade.
++
++### G3. Independent adversarial check
++
++To avoid grading our own fixes, a separate agent wrote 25 new attack cases **before reading
++any code**, from the written policy only (`docs/ARCHITECTURE.md`, `docs/LIMITATIONS.md`), and ran
++them offline (`audit/independent_adversarial.py`, cases in `audit/independent_adversarial_cases.json`).
++It was told not to change its acceptable verdicts after seeing results.
++
++**Result on the code as fixed up to K17: 19 of 25.** That is the honest, unanchored figure.
++Failures:
++
++| Case | Input | Verdict | Acceptable | Severity | Root cause |
++|---|---|---|---|---|---|
++| I06 | genuine Hindi PM-KISAN message ending `https://pmkisan.gov.in।` | **FAKE** | UNVERIFIED | **false accusation** | the danda (।) became part of the host, so the official site looked like a lookalike. A common way to write Hindi, and present in the ORIGINAL code too |
++| I21 | release says 15 December, message says 15 November | **GENUINE** | UNVERIFIED | **false reassurance** | dates were never compared |
++| I24 | `https://uidai.gov.in/redirect?url=https%3A%2F%2Faadhaar-docs-update.top%2Flogin` plus a matching release | **GENUINE** | FAKE or UNVERIFIED | **false reassurance** | only the host was checked, not where the link sends people |
++| I10 | zero-width space inside `pmkisan.gov.in.benefit-claim.top` | UNVERIFIED | FAKE | missed scam | browsers drop U+200B, our checks did not |
++| I11 | full-width dots `uidai．gov．in．kyc-update．top` | UNVERIFIED | FAKE | missed scam | browsers map them to ".", our checks did not |
++| I16 | 60,000-character forward with the scam link at the end | UNVERIFIED | FAKE | missed scam | text was cut at 5,000 characters BEFORE links were read |
++
++After reading the code the tester tried three extra probes, not counted in its score. They are
++kept as `audit/independent_probes.py` and were rerun on the ORIGINAL and the FIXED code
++(`audit_logs/35_independent_probes_before_after.log`):
++
++| Probe | Input | Original code | Fixed code |
++|---|---|---|---|
++| X1 | release title, filler past 5,000 characters, then a scam link | UNVERIFIED (the scam link was silently dropped) | FAKE |
++| X2 | "Rs 5 crore" in the message, "Rs 5 lakh" in the release | **GENUINE** ("Rs 5 crore" was read as Rs 5) | UNVERIFIED |
++| X3 | unencoded `?url=https://aadhaar-docs-update.top/login` on uidai.gov.in plus a matching release | **GENUINE** | UNVERIFIED |
++
++The tester reported GENUINE for X1 on the intermediate code (fixed up to K17). That run was not
++saved, so it is not counted here.
++
++These findings became fixes K18 to K23. After them: **25 of 25**
++(`audit_logs/31_independent_adversarial_before.log`, `audit_logs/32_independent_adversarial_after.log`).
++The 25 cases are now development cases too, so 25 of 25 is a regression result. **The next
++unanchored estimate needs another fresh set.** What held up in the independent run: foreign
++gov.au links, licindia.in, sbi.co.in, onlinesbi.sbi, eciresults.nic.in, ports, trailing periods,
++all-caps URLs, WhatsApp bold and emoji, a Cyrillic "о" in "gоv" in Telugu, IP-literal hosts,
++official names only in the path, prompt injection, an added Rs 10,000, and a genuine warning
++that quotes a known debunk.
++
++### G4. LLM attack (`audit/llm_injection.py`, mocked LLM on 127.0.0.1)
++
++The fake model proposes an invented claim, then rewrites the report with an invented
++URL, an invented number, a statement contradicting the verdict and one valid statement.
++
++| Check | Before | After |
++|---|---|---|
++| invented claim rejected (not quoted in the message) | pass | pass |
++| invented URL dropped | pass | pass |
++| invented number dropped | pass | pass |
++| verdict-contradicting statement dropped | **fail** | pass |
++| verdict decided by code | pass (checked against a fixed FAKE) | pass (checked against the same message with the LLM off, a stricter check) |
++
++By design the LLM never adds evidence and runs after the verdict for the report text. It CAN
++still influence the verdict in one way: claims it proposes (only if quoted word for word from the
++message) may become the claim that gets checked. One fake-model scenario is not proof of more.
++
++A real LLM provider was **NOT_TESTED** (no key, and the network is blocked).
++
++---
++
++## H. Security
++
++All payloads were safe and local. Nothing was sent to a third party.
++`audit/security_practical.py` (against a real uvicorn server), `audit/key_leakage.py`,
++`audit/concurrency.py`, `tests/test_security.py`.
++
++| Area | Test | Before | After |
++|---|---|---|---|
++| SSRF | 11 links to localhost, 127.0.0.1, `[::1]`, 169.254.169.254, 10.0.0.1, `2130706433`, file, gopher, javascript, data, ftp: did the server request itself? | pass (no request) | pass |
++| SSRF | were unsafe links passed to RDAP, Safe Browsing or urlscan? | pass | pass |
++| Private redirects, DNS rebinding | `guarded_fetch` (off by default) with a fake resolver and transport | pass (logic only) | pass (logic only). Live path NOT_TESTED |
++| URL schemes | javascript, data, file, vbscript, jar | pass | pass |
++| Punycode and homoglyphs | D2, ADV11, ADV13 | pass | pass |
++| Parser differential | `http://x.com\@pib.gov.in/` | **fail**: parsed as pib.gov.in, so treated as OFFICIAL (the first audit check wrongly showed this as a pass) | pass: parsed as x.com, like a browser, flagged as impersonation |
++| Crafted hosts | `evil%2F..%2Fadmin.com`, `a.b.com%23frag` reach the RDAP request path? | **fail** (`domain/%2fadmin.com` would be requested) | pass: invalid host, never sent, RDAP refuses it too |
++| Oversized upload | 60 MB file | 413, but only after the whole body was read | 413 before reading (0.12 s) |
++| Declared 2 GB body | raw socket, `Content-Length: 2147483648` | **fail**: connection held open waiting | pass: 413 at once |
++| Missing Content-Length | chunked body | accepted (evidence: regression test K10 fails on the original code) | 411 |
++| Decompression bomb | 60 MP PNG (limit 40 MP) | **fail**: accepted | pass |
++| MIME spoofing, invalid media | script named `.jpg`, random bytes with an MP4 header, corrupt WAV, MP4 without video | pass | pass |
++| Polyglot | JPEG with a ZIP appended | accepted, never executed, re-encoded before any upload | same (noted, not a failure) |
++| Path traversal | client file name `../../../../tmp/satyapan_pwned.jpg`, ids `..%2F..%2Fetc%2Fpasswd`, `abc;rm` | pass | pass |
++| Prompt injection | message text and fake LLM | pass for the verdict, fail for the report text | pass |
++| Key leakage | a mock service echoes the key in its error body | **fail**: key stored in the report (`tool_runs.detail`) | pass: report, call records and logs clean |
++| Unsafe logging | JSON logs with redaction, no message text logged | pass | pass |
++| Retention | uploads after processing, records after 24 h, sweep scheduled? | **fail** (never deleted) | pass |
++| Rate limiting | 12 rapid POSTs, 30 GETs | pass (10 then 429, GETs free) | pass |
++| Rate limiting, spoofed `X-Forwarded-For` | 12 POSTs with a different fake XFF each (`audit_logs/33_xff_behaviour.log`) | **the first audit wrongly reported "spoofing ignored"** | From 127.0.0.1: all 12 accepted, the limit is bypassed, because uvicorn trusts XFF from loopback by default. From a non-loopback address: 10 accepted, then 429 |
++| Rate limiting behind a proxy | which client address the limit uses | n/a | Proxy on the same host: correct client IP by default. Proxy on another host: start uvicorn with `--forwarded-allow-ips=<proxy IP>`, otherwise all users share one bucket. Never expose the app on a host where untrusted local processes run |
++| Budget race | 8 threads, 40 attempts, limit 20 | **fail** (JSONDecodeError) | pass: exactly 20 |
++
++The SSRF self-request payloads in the first audit script were hard-coded to port 8765. The
++reference run's server used port 8799, so that one check proved nothing there. The script now
++uses the server's real port and the security step was rerun (`results/audit/run_20261030T222654Z/security_portfix.log`,
++21 of 21). The earlier runs on port 8765 (`audit_logs/08_security_baseline.log`,
++`audit_logs/21_security_after.log`) were valid.
++
++Security script totals: before 14 of 20 reported as passing, and one of those 14 was the
++parser-differential bug passing a flawed check, so really 13 of 20. After: **21 of 21**.
++
++**Not done, residual risk:** no authentication on the API (anyone who can reach it can submit
++work, limited only by the rate limit), slow-body attacks within the 52 MB limit (uvicorn has no
++body-read timeout, so put a reverse proxy with `client_body_timeout` in front), no antivirus
++scanning, media parsers (FFmpeg, Pillow, Tesseract) are an attack surface, TLS is the
++deployment's job. "The app starts" was never taken as evidence of security.
++
++---
++
++## I. Performance
++
++All figures from this 2 vCPU x86 Linux workspace. **A MacBook will differ. No MacBook figure
++is claimed.** External API latency is NOT measured (every call was refused by the proxy in
++about 0.3 s per attempt with retries off). Each case runs in a fresh process.
++`audit/performance.py`. Before: `audit_logs/12_performance_baseline.log`. After: the reference run's `performance.log`.
++
++| Input | File | Before: time, peak memory | After: time, peak memory | Main cost |
++|---|---|---|---|---|
++| Text with a scam link | none | 0.31 s, 187 MB | 0.36 s, 188 MB | URL rules, RDAP refusal |
++| Image 1 MP | 0.17 MB | 1.13 s, 187 MB | 1.11 s, 188 MB | Tesseract |
++| Image 12 MP | 0.9 MB | 5.48 s, 223 MB | 4.27 s, 330 MB | Tesseract |
++| Image 39 MP | 2.1 MB | 11.34 s, 327 MB | **4.38 s**, 327 MB | Tesseract, now on a downscaled copy |
++| Video 60 s 720p | 11.8 MB | 4.65 s, 189 MB | 4.50 s, 189 MB | FFmpeg keyframes |
++| Video 180 s 1080p | 35.5 MB | 19.6 s, 211 MB | 19.6 s, 211 MB | FFmpeg keyframes |
++| Audio 180 s | 0.87 MB | **rejected** (ffprobe: 180.0065 s > 180 s limit, `audit_logs/34_audio_duration.log`) | 0.05 s (no audio index in this run) | validation only |
++| Audio fingerprint, 170 s | n/a | n/a | index 1.10 s, query 1.12 s (0.77 and 0.79 s in a quieter run) | STFT peaks |
++
++Peak memory counts the Python process only (Tesseract and FFmpeg run as child processes).
++After the fix, the 12 MP image is decoded in Python for the downscale check, which is why its
++peak rose while its time fell.
++
++**Limits.** Images 10 MB and 40 MP, video 50 MB, audio 10 MB, 180 s (0.5 s tolerance), 4 files,
++52 MB per request.
++
++**Concurrency, 8 simultaneous 12 MP image investigations with consent on** (`audit/concurrency.py`):
++
++| | Before | After |
++|---|---|---|
++| Finished | **0 of 8**: every job ended with `error: TimeoutExpired` after about 31.9 s | **8 of 8 done** |
++| Why | 8 Tesseract processes, each multithreaded, on 2 CPUs. The OCR timeout raised `subprocess.TimeoutExpired`, which `_run` did not catch, so the whole investigation failed | Jobs queue (`SATYAPAN_MAX_CONCURRENT_JOBS`, default half the CPUs, here 1), Tesseract runs single-threaded, and a timeout is now a recorded tool failure |
++| Time | n/a | single job 4.6 s, 8 jobs 44.4 s in total (the last waits for 7 others) |
++| Server peak memory | 607 MB | 819 MB with default glibc (873 MB in an earlier run), **407 MB with `MALLOC_ARENA_MAX=2`** |
++
++The memory growth came from glibc allocating a separate memory arena per worker thread.
++`MALLOC_ARENA_MAX=2` is a Linux deployment setting. macOS uses a different allocator, not measured.
++
++---
++
++## J. Dataset and leakage
++
++**The dataset has not been collected.** The claim manifest template has **0 of 100 rows filled**
++and the detector manifest **0 of 120**. No accuracy, precision or recall figure for the
++product exists, and none is claimed. The numbers in sections D, E and G are tests of
++mechanisms on public images and hand-written messages, not accuracy on real forwards.
++
++What was verified (`audit_logs/13_dataset_audit_baseline.log`):
++
++* The plan is internally consistent: dev 30 and test 70 rows. Test-split ground truth: 21 TRUE,
++  46 FALSE, 3 UNRESOLVED.
++* Category M (FALSE claims where the expected verdict is UNVERIFIED) is a deliberate design
++  choice, to measure safe abstention. Report it separately so it is not counted as an error.
++* The detector plan has 20 AI and 20 real images in dev, 40 and 40 in test.
++* Test-split thresholds are locked behind `--frozen` in `eval/run_eval.py`.
++
++**Leakage finding K14.** The validator only caught exact duplicates (same SHA-256). A resized
++copy of a dev image placed in test was NOT detected. Fixed: the validator now also runs the
++product's own image matcher across splits and fuzzy-matches claim text (similarity 90 or more).
++It over-reports on purpose (it inherits the matcher's same-scene false positives), so each
++flagged pair is reviewed by eye and either moved or marked `leak-reviewed` in its notes.
++
++---
++
++## K. Critical bugs and fixes
++
++Every product change was made after the baseline measurement, is listed here, and has a
++regression test that fails on the original code (B3). K1 to K17 were found by our own attacks,
++K18 to K23 by the independent tester (G3). Severity: **Critical** gives a wrong
++verdict or loses the whole investigation, **High** is a security or data-handling defect,
++**Medium** degrades results.
++
++| ID | Severity | Bug (evidence before) | Fix | Files | Evidence after |
++|---|---|---|---|---|---|
++| K1 | Critical | Any "gov" in a non-gov.in host was STRONG impersonation: mygov.in and travel.state.gov messages became FAKE (ADV01, ADV04). Punycode alone was strong too | Strong only for signals that imitate a specific official site (official domain inside the host, lookalike, official label such as `pmkisan` as a whole part, official name in userinfo or behind a backslash). Generic "gov", fragments and non-lookalike punycode are moderate. Foreign government suffixes are never impersonation. `mygov.in` added to the allowlist with its source | `links/urlinfo.py`, `pipeline/graph.py`, `templates/official_domains.txt` | ADV01, ADV04, ADV16 UNVERIFIED. D1, D2, ADV11, ADV14 FAKE |
++| K2 | Critical | "share" counted as a call to action through a link, and each link was a separate source: two news links gave FAKE (ADV02) | Only link actions count (click, register, apply, KYC, OTP), and only as weak. All lexical link rules share one independence key | `pipeline/graph.py` | ADV02 UNVERIFIED, test K2 |
++| K3 | Critical | Amounts matched as substrings: Rs 200 was "consistent" with Rs 2000, giving GENUINE (ADV05) | Numbers compared as values, with lakh and crore applied | `claims.py`, `pipeline/graph.py` | ADV05 UNVERIFIED, Rs 2,000 still matches 2000 |
++| K4 | Critical | An LLM rewrite saying "This message is genuine and safe to share" passed the citation check | New rules: no verdict word that disagrees with the verdict unless it is in the cited evidence, and at least 60% of content words must appear in the cited evidence | `pipeline/citations.py` | LLM attack 5 of 5 |
++| K5 | High | C2PA credentials that FAIL validation (file changed after signing) were reported as neutral | Reported as moderate contradicting evidence, media assessment `CREDENTIALS_INVALID` | `pipeline/graph.py` | F2 |
++| K6 | Critical | The audio index was built and never saved, and never loaded: audio reuse could never be found in the product | `AudioIndex.save` and `load` (fingerprints only), saved by `build_known_index.py`, loaded by `Context.default` | `media/audio.py`, `scripts/build_known_index.py`, `pipeline/graph.py` | H1 FAKE |
++| K7 | High | An API key echoed by a service was stored in the report via `tool_runs.detail` | Every `ToolError` message is redacted on creation, `_run` redacts details, `redact()` also removes the literal value of every configured secret, the integration harness redacts errors | `errors.py`, `logging_setup.py`, `pipeline/graph.py`, `integration/run_all.py` | key leakage test clean, and the same test fails on the original code |
++| K8 | High | `DailyBudget` raced: concurrent investigations raised JSONDecodeError, and the budget call sat outside the error handler | Process-wide lock per file, `fcntl` file lock, atomic write, corrupt file moved aside, budget never spent on an unconfigured tool, budget errors skip the tool | `security/ratelimit.py`, `pipeline/graph.py`, `media/remote.py` | 20 of 40 granted, no exceptions |
++| K9 | Critical | Under load, `subprocess.TimeoutExpired` from Tesseract escaped `_run` and failed the whole investigation (0 of 8 finished). OCR on photos produced junk claims | `_run` catches every exception as a tool failure. Investigations queue. Tesseract single-threaded on a downscaled copy (JPEG draft decode). Line-level confidence gate | `pipeline/graph.py`, `api/app.py`, `config.py`, `ocr.py` | 8 of 8 done. Photos give no OCR text, captions next to photos survive |
++| K10 | High | Images of 40 to 80 MP were accepted (Pillow only raises above 2x). Bodies were fully read before any size check. A declared 2 GB body held the connection | Explicit pixel check from the header. Middleware refuses a missing (411) or too large (413) Content-Length before reading | `security/uploads.py`, `api/app.py` | security checks pass |
++| K11 | High | Retention was never enforced, and the sweep did not cover investigation records (user text) | Uploads and work files deleted when an investigation ends. Sweep covers records, runs at start-up and at most every 10 minutes. Records written atomically | `storage.py`, `api/app.py` | security checks pass |
++| K12 | High | Crafted host names reached the RDAP request path. The backslash parser differential made `x.com\@pib.gov.in` look official | Browser-style backslash normalisation, strict DNS host check, invalid hosts are never official and never sent, RDAP refuses invalid names | `security/ssrf.py`, `sources/official.py`, `links/rdap.py`, `links/urlinfo.py` | security checks pass |
++| K13 | Medium | A 180.0065 s file failed a 180 s limit | 0.5 s tolerance | `security/uploads.py` | 180 s audio accepted |
++| K14 | Medium | Validator missed near-duplicate leakage | Cross-split image matching and fuzzy claim matching | `eval/validate_manifest.py` | test K14 |
++| K15 | Medium | Reason statements were not ordered by strength | Strongest first | `pipeline/report.py` | test K15 |
++| K16 | Critical | A fresh install loaded EMPTY allowlists (nothing copies the templates into `data/`), so rbi.org.in was not official and every fact-checker counted as unknown | `Context.default` falls back to the shipped lists | `pipeline/graph.py` | test K16 |
++| K17 | High | An uncalibrated AI-detector score was shown as a number (reads like "97% AI") | Hidden unless `AI_IMAGE_DETECTOR_CALIBRATED=1`, kept only as `raw_score_for_calibration_only` | `pipeline/graph.py` | test K17 (mocked Sightengine reply) |
++| K18 | Critical | A danda (।) after a URL became part of the host: a genuine Hindi message was FAKE (I06) | URLs end at the danda and other Unicode punctuation, and a host may only contain letters, marks, digits, "-" and "." | `claims.py`, `security/ssrf.py` | I06 UNVERIFIED |
++| K19 | Medium | Zero-width and full-width characters hid an official name inside a scam host (I10, I11) | Links are normalised the way browsers do (format characters dropped, NFKC, ideographic full stop to "."), and the trick itself is a moderate signal | `security/ssrf.py`, `links/urlinfo.py`, `pipeline/graph.py` | I10, I11 FAKE |
++| K20 | High | Text was cut at 5,000 characters before links were read, so a scam link at the end vanished (I16, X1) | Links after the cut are still extracted and checked | `pipeline/graph.py` | I16 and X1 FAKE |
++| K21 | Critical | Dates were never compared: a release saying 15 December confirmed a message saying 15 November (I21) | Every English or numeric date in the claim must appear in the release. Hindi and Telugu month names are not parsed yet | `claims.py`, `pipeline/graph.py` | I21 UNVERIFIED, same date still GENUINE |
++| K22 | Critical | An open redirect on an official domain counted as an official link (I24, X3) | Redirect targets inside links (`?url=`, `next=`, `/out/https://...`) are extracted and checked as links of their own. An official link that leads elsewhere is never official support and is moderate evidence against | `links/urlinfo.py`, `pipeline/graph.py` | I24 and X3 UNVERIFIED |
++| K23 | Critical | "Rs 5 crore" was read as Rs 5: crore and lakh were dropped after a currency prefix (X2) | The amount pattern keeps the multiplier | `claims.py` | test K23 |
++
++Changes to the audit tooling itself, recorded separately because they are not product fixes:
++the ADV11 input was mislabelled (corrected, old input kept as ADV13), the LLM check now compares
++with the no-LLM verdict instead of a fixed FAKE, the crafted-host check now tests what reaches
++the request path instead of only the parsed string, the retention check now tests the sweep
++directly, and the audit scripts now exit non-zero when a check fails.
++
++API change: `POST /v1/investigations` now returns `status: "queued"`. Poll until the status is
++neither `queued` nor `running`.
++
++---
++
++## L. Remaining blockers
++
++| # | Blocker | Why it matters | What closes it |
++|---|---|---|---|
++| L1 | **No external API verified live** | Fact Check, Safe Browsing, RDAP and PIB are central to the demo. D4 depends on Safe Browsing | Run `scripts/run_integration_tests.sh` on the MacBook with keys. Every row must be LIVE_SUCCESS or have a known fallback |
++| L2 | **Dataset not collected** (0 of 100, 0 of 120) | No accuracy claim is possible | Collect it, run `eval/validate_manifest.py` until clean, evaluate the test split once with `--frozen` |
++| L3 | **Image reuse matches different photos of the same scene** (hard-negative FPR 0.417) | A genuine new photo of a place from an old debunk can be called FAKE | Short term: show a side-by-side comparison and say "matches a debunked image" in the UI. Proper fix: hard negatives in a new dev set, retune, then a NEW held-out set |
++| L4 | Index cliff above 250 items | Crops and screenshots of debunked images stop matching | Keep the demo index under 250, or raise `orb_all_below` and measure |
++| L5 | Paraphrases are not matched (B2) | Reworded false claims stay UNVERIFIED unless live Fact Check finds them | Accept for the demo, or add multilingual embeddings and measure on the dev split |
++| L6 | No manipulation or deepfake detection | T1-D asks for it | Pitch it honestly as provenance and reuse. Do not claim detection |
++| L7 | Performance on the MacBook unmeasured | The demo machine decides the latency | Run `bash scripts/run_local_tests.sh` on it |
++| L8 | OCR accuracy on real WhatsApp screenshots unmeasured, gate values untuned | Screenshots are the main input type | Measure on the dev split of the dataset |
++| L9 | No auth, no slow-body protection, single process, rate limit bypassable from the same host | Fine for a demo, not for a public link | Reverse proxy with timeouts and a shared secret before any public URL |
++| L10 | LLM path tested with a fake model only | Wording quality and grounding pass rate unknown | Run with the chosen provider, or keep LLM off for the demo |
++
++---
++
++## M. Final recommendation
++
++**CONDITIONAL GO.**
++
++Evidence for GO-level confidence in the core:
++
++* 95 of 95 tests pass. 29 new tests guard 23 fixed bugs, and 28 of them fail on the original code.
++* 16 of 16 of our adversarial verdict attacks behave correctly offline, after 4 of 12 failed before.
++* An independent tester's 25 attacks, written without seeing the code: 19 of 25 on first contact
++  (1 false accusation, 2 false reassurances), 25 of 25 after the fixes.
++* 21 of 21 practical security checks pass, after 7 real failures before.
++* Under load, 8 of 8 concurrent jobs finish, after 0 of 8 before.
++* 13 of 15 end-to-end scenarios are correct. The 2 failures are a known lexical limit and a blocked API.
++* No API failure produced evidence in any run, and in the fake-LLM attack the verdict was the same with and without the LLM.
++
++Why not GO:
++
++* Not one external API has been seen working (L1).
++* No dataset, so no accuracy (L2).
++* A STRONG FAKE can come from a same-scene image match, with a measured 42% false-match rate
++  on hard negatives (L3).
++
++Conditions, in order, all before the demo:
++
++1. `scripts/run_integration_tests.sh` on the MacBook: Fact Check, Safe Browsing (D4 must pass),
++   RDAP for `.in` and PIB RSS must be LIVE_SUCCESS.
++2. `scripts/run_local_tests.sh` on the MacBook with the lock file: all steps as in this report.
++3. In the UI and the pitch, image matches are shown side by side as "matches a debunked image",
++   and the pitch says "provenance and reuse", never "deepfake detection".
++4. Collect at least the 30-row dev split and report results on it, labelled as dev results.
++
++**NO-GO triggers:** Fact Check and Safe Browsing both unavailable on the demo network, or the
++MacBook run showing any FAKE for a genuine message in the adversarial set.
++
++---
++
++## Appendix 1. Exact macOS commands
++
++```bash
++# one-time setup (Homebrew)
++brew install python@3.12 tesseract tesseract-lang ffmpeg
++cd satyapan-feasibility
++python3.12 -m venv .venv && source .venv/bin/activate
++pip install -r audit_logs/requirements.lock.txt      # exact versions used in this audit
++# or: pip install -r requirements.txt -r requirements-dev.txt   (unpinned, newest versions)
++python scripts/fetch_test_media.py
++python scripts/fetch_heldout_images.py
++cp .env.example .env                                  # add keys for the integration run only
++
++# every local test, no keys, nothing uploaded (6 to 10 minutes)
++bash scripts/run_local_tests.sh
++bash scripts/run_local_tests.sh --quick               # skips performance and index scaling
++
++# live APIs
++bash scripts/run_integration_tests.sh
++bash scripts/run_integration_tests.sh --allow-third-party
++
++# single pieces
++python -m pytest -o addopts="" -q -rA                 # unit and component tests
++python audit/adversarial_verdicts.py
++python audit/e2e_scenarios.py --heldout-dir data/heldout
++python audit/image_eval.py --set heldout --dir data/heldout
++uvicorn satyapan.api.app:app --port 8765              # then, in a second terminal:
++python audit/security_practical.py --server http://127.0.0.1:8765 --data-dir data --log <uvicorn log file>
++```
++
++Test types: **unit and component** (pytest, offline), **adversarial** (mocked transport),
++**LLM attack** (mocked LLM), **leakage** (mocked echoing service), **end-to-end** (real pipeline,
++real API calls when keys and network exist, otherwise AUTH_REQUIRED or BLOCKED), **security** (real local server), **concurrency** (real local server),
++**performance** (this machine), **held-out evaluation** (frozen thresholds), **integration**
++(LIVE, only `scripts/run_integration_tests.sh`).
++
++## Appendix 2. Files changed in this round
++
++Product code (18 files): `satyapan/api/app.py`, `satyapan/claims.py`, `satyapan/config.py`,
++`satyapan/errors.py`, `satyapan/links/rdap.py`, `satyapan/links/urlinfo.py`,
++`satyapan/logging_setup.py`, `satyapan/media/audio.py`, `satyapan/media/remote.py`,
++`satyapan/ocr.py`, `satyapan/pipeline/citations.py`, `satyapan/pipeline/graph.py`,
++`satyapan/pipeline/report.py`, `satyapan/security/ratelimit.py`, `satyapan/security/ssrf.py`,
++`satyapan/security/uploads.py`, `satyapan/sources/official.py`, `satyapan/storage.py`.
++
++Scripts, data and tests: `scripts/build_known_index.py`, `eval/validate_manifest.py`,
++`integration/run_all.py`, `templates/official_domains.txt`, `tests/test_api.py` (polls the new
++`queued` status). New: `tests/test_audit_regressions.py`, `scripts/run_local_tests.sh`,
++`scripts/run_integration_tests.sh`, `scripts/fetch_heldout_images.py`.
++
++Audit tooling (new folder `audit/`): `adversarial_verdicts.py`, `concurrency.py`,
++`dataset_audit.py`, `e2e_scenarios.py`, `image_eval.py`, `index_scaling.py`, `key_leakage.py`,
++`llm_injection.py`, `performance.py`, `security_practical.py`, and the independent tester's
++`independent_adversarial.py` and `independent_adversarial_cases.json`, and `independent_probes.py`
++(its three extra probes as a script).
++
++Docs: `docs/FINAL_TEST_AUDIT.md` (new), `docs/ARCHITECTURE.md` (evidence table),
++`docs/SECURITY.md` (corrected claims about uploads, redaction, retention, rate limiting),
++`docs/LIMITATIONS.md` (impersonation trade-off), `docs/TEST_RESULTS.md` and
++`docs/FINAL_REPORT.md` (pointer to this audit), `README.md` (test commands).
++
++A line-by-line diff against the delivered ZIP is in `audit_logs/CHANGES.diff`.
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/docs/LIMITATIONS.md satyapan-feasibility/docs/LIMITATIONS.md
+--- /home/claude/satyapan-feasibility/docs/LIMITATIONS.md	2026-10-30 20:44:29.862698835 +0000
++++ satyapan-feasibility/docs/LIMITATIONS.md	2026-10-30 22:27:33.056302057 +0000
+@@ -14,7 +14,7 @@
+ - **Official-record support is strict on purpose.** It needs 70% term overlap, matching amounts and official links. Expect many genuine messages to be UNVERIFIED rather than GENUINE.
+ 
+ ## Heuristics and inputs
+-- **Impersonation rules are heuristics.** "Government plus a non-official look-alike link" is strong evidence. A legitimate site with "gov" in its name outside gov.in would be flagged. The allowlist is the fix.
++- **Impersonation rules are heuristics.** "Government plus a link that imitates a specific official site" is strong evidence. A generic "gov" in a non-gov.in name is only moderate (it flagged mygov.in and travel.state.gov as FAKE before the audit fix). The trade-off: a scam on a generic name like `pm-relief-gov.top` is now UNVERIFIED offline and needs a second signal (a new or unregistered domain from RDAP, Safe Browsing) to become FAKE. Keep `templates/official_domains.txt` (or `data/official_domains.txt`) up to date.
+ - **OCR is unmeasured on real screenshots.** Only rendered text was tested.
+ 
+ ## External services
+@@ -23,3 +23,5 @@
+ 
+ ## Hosting
+ - **No async queue.** Investigations run in threads, which is fine for a demo but not for load.
++- **Dates are compared only in English and numeric forms** (15 November, Nov 15, 15/11/2026). Hindi and Telugu month names are not parsed, so a wrong date written in Hindi is not caught.
++- **Links are normalised the way browsers do** (invisible characters dropped, full-width forms mapped to ASCII). This follows the IDNA idea but is not a complete UTS 46 implementation.
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/docs/SECURITY.md satyapan-feasibility/docs/SECURITY.md
+--- /home/claude/satyapan-feasibility/docs/SECURITY.md	2026-10-30 20:43:26.038695041 +0000
++++ satyapan-feasibility/docs/SECURITY.md	2026-10-30 22:48:08.893184641 +0000
+@@ -12,21 +12,21 @@
+ | DNS rebinding | `guarded_fetch` resolves once, rejects if any address is non-public, connects to the checked IP, and sends Host and SNI for the real name, as OWASP advises | `security/ssrf.py` | Logic-tested with a fake resolver. Live path not tested |
+ | File type spoofing | Magic-byte sniffing (JPEG, PNG, WebP, MP4/MOV, WebM, Ogg, WAV, MP3, M4A). The file name is never trusted. Content type wins over the extension | `security/uploads.py` | Tested: a shell script named `.jpg` is rejected |
+ | Corrupt and hostile media | Pillow full decode. ffprobe with a 10 s timeout. FFmpeg with timeouts. Files stored under random names | `security/uploads.py`, `api/app.py` | Tested: a truncated JPEG is rejected |
+-| Size and dimension limits | 10 MB images, 50 MB video, 10 MB audio, 180 s duration, 40 MP pixel limit (decompression bombs). Uploads stream in 1 MB chunks and stop at the limit | config, `api/app.py` | Tested: an 81 MP bomb is rejected |
++| Size and dimension limits | 10 MB images, 50 MB video, 10 MB audio, 180 s duration (0.5 s tolerance), 40 MP pixel limit checked from the header before decoding. Every POST must declare Content-Length, and bodies over 52 MB are refused with 413 BEFORE they are read (Starlette otherwise parses the whole multipart body first) | config, `api/app.py`, `security/uploads.py` | Tested in the audit: 60 MP image rejected, 60 MB body and a declared 2 GB body refused with 413, missing Content-Length gets 411. Audit finding: before the fix, 40 to 80 MP images were accepted and bodies were fully buffered |
+ | Malware | Uploads are never executed or served back. **Not done:** antivirus scanning. **Residual risk:** media parsers have had CVEs. Run FFmpeg and Tesseract in the container, keep them updated, and add ClamAV if time allows | n/a | Residual risk |
+ | Path traversal | Ids must be alphanumeric. Upload paths are generated, never taken from the client | `storage.py`, `api/app.py` | Tested |
+-| API key exposure | Keys only in the server's `.env`, never sent to the browser. `.env` is gitignored. Keys are redacted from logs, call records and errors (`key=`, `api_secret=`, `API-Key`, `x-apikey`, `Authorization`) | `logging_setup.py` | Tested |
++| API key exposure | Keys only in the server's `.env`, never sent to the browser. `.env` is gitignored. Keys are redacted from logs, call records, every `ToolError` message and stored tool details: key-like parameters and headers, plus the literal value of every configured secret | `logging_setup.py`, `errors.py` | Tested in the audit with a service that echoes the key back. Audit finding: before the fix the key leaked into the stored report through `tool_runs.detail` |
+ | Third-party uploads | Three consent flags, all **off by default**: text to an LLM, links to urlscan, media to Cloud Vision and Sightengine. Images are re-encoded without EXIF or GPS before upload. urlscan uses `unlisted`, with `private` available | `pipeline/graph.py`, `security/uploads.py` | Tested: consent gating and EXIF stripping |
+ | Safe Browsing privacy | v5 `urls:search` sends raw URLs to Google. `hashes.search` exists for privacy-preserving checks (R) | `links/safebrowsing.py` | Documented. Consider `hashes.search` |
+ | LLM providers | Free Gemini: "human reviewers may read" inputs, "Do not submit... personal information" (V). Sarvam trains on content unless you opt out (R). For user content use local Ollama, a paid tier, or consent plus redaction | `llm.py` | Default off |
+-| Retention | Uploads and working files deleted after 24 h (`Store.sweep`). The known-debunk index stores hashes, keypoints and fingerprints, not images | `storage.py`, `media/image_index.py` | Sweep implemented. Schedule it in deployment |
+-| Abuse and quotas | Token bucket, 10 POSTs per minute per IP. Daily budgets per paid-quota tool (Sightengine 80, Vision 30, urlscan 100, VirusTotal 400) | `security/ratelimit.py` | Tested |
++| Retention | Uploads and working files are deleted as soon as an investigation finishes. Investigation records (they contain the user's text) are deleted after 24 h by `Store.sweep`, which the API runs at start-up and at most every 10 minutes. The known-debunk indexes store hashes, keypoints and fingerprints, not media | `storage.py`, `api/app.py` | Tested in the audit. Audit finding: before the fix the sweep was never called and did not cover investigation records |
++| Abuse and quotas | Token bucket, 10 POSTs per minute per client IP. uvicorn trusts `X-Forwarded-For` from 127.0.0.1 by default, so a proxy on the same host works as is, and any local process can bypass the limit with a fake header (measured). A proxy on another host needs `--forwarded-allow-ips=<proxy IP>`, otherwise all users share one bucket. Daily budgets per paid-quota tool (Sightengine 80, Vision 30, urlscan 100, VirusTotal 400), with a process-wide lock, a file lock and atomic writes. At most `SATYAPAN_MAX_CONCURRENT_JOBS` investigations run at once, the rest queue | `security/ratelimit.py`, `api/app.py` | Tested in the audit: 8 threads, exactly 20 of 40 budget units granted. Audit finding: before the fix concurrent budget use raised JSONDecodeError |
+ | Platform terms | No Telegram scraping or indexing (AI use prohibited). No myScheme scraping (bots prohibited). No YouTube downloading ("download... any Content" prohibited, R) | design | n/a |
+ 
+ ## Before any public deployment
+ 
+ 1. Put the backend behind HTTPS with request size limits at the proxy as well.
+-2. Schedule `Store.sweep()` hourly.
++2. Keep the built-in retention sweep, or run `Store.sweep()` from cron if the API is not always running.
+ 3. Show the consent text in the UI before any third-party check, and record consent per investigation.
+ 4. Show "Advisory provided by Google" next to any Safe Browsing result.
+ 5. Commercial use breaks several free tiers: Safe Browsing, VirusTotal, urlscan (written permission needed) and Vercel Hobby. Re-check them before going beyond the hackathon.
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/docs/TEST_RESULTS.md satyapan-feasibility/docs/TEST_RESULTS.md
+--- /home/claude/satyapan-feasibility/docs/TEST_RESULTS.md	2026-10-30 20:44:22.022698369 +0000
++++ satyapan-feasibility/docs/TEST_RESULTS.md	2026-10-30 22:27:33.054832743 +0000
+@@ -1,5 +1,7 @@
+ # Test results
+ 
++> **Audit update (31 Oct 2026).** An end-to-end audit found and fixed 23 bugs after this page was written. Where this page and `docs/FINAL_TEST_AUDIT.md` disagree, the audit is right.
++
+ **Environment:** our build workspace on 31 Oct 2026.
+ - Linux x86_64, 2 vCPU, Python 3.13, Tesseract 5.3.4, FFmpeg 6.1.
+ - Network blocked except PyPI and GitHub raw files.
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/eval/validate_manifest.py satyapan-feasibility/eval/validate_manifest.py
+--- /home/claude/satyapan-feasibility/eval/validate_manifest.py	2026-10-30 20:38:09.010676196 +0000
++++ satyapan-feasibility/eval/validate_manifest.py	2026-10-30 22:02:11.819117843 +0000
+@@ -3,6 +3,11 @@
+ Checks: exact category counts per split, unique ids, allowed values, required fields,
+ expected verdict consistent with the plan, real http(s) evidence URLs, and LEAKAGE:
+ the same evidence URL, claim text or media file must not appear in both dev and test.
++Near-duplicates are leakage too (added in the audit round): a resized, cropped or
++screenshotted copy of a dev image in test, or a lightly reworded dev claim in test.
++Near-duplicate checks over-report on purpose (the image matcher also fires on
++different photos of the same scene). Review each pair by eye, then either move one
++item or write leak-reviewed in its notes column.
+ 
+ Usage: python eval/validate_manifest.py eval/manifest.csv
+ """
+@@ -19,6 +24,42 @@
+ ROOT = Path(__file__).resolve().parent.parent
+ 
+ 
++IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp")
++TEXT_NEAR_DUP = 90
++
++
++def near_duplicates(rows: list[dict], media_root: Path | None = None) -> list[str]:
++    """Cross-split near-duplicate media (same matcher as the product) and near-duplicate claim text."""
++    sys.path.insert(0, str(ROOT))
++    from satyapan.media.image_index import ImageIndex
++    from satyapan.pipeline.graph import similarity
++    media_root = media_root or ROOT / "data" / "eval_media"
++    out = []
++    live = [r for r in rows if "leak-reviewed" not in (r.get("notes") or "")]
++    dev = [r for r in live if r["split"] == "dev"]
++    test = [r for r in live if r["split"] == "test"]
++    idx = ImageIndex()
++    for r in dev:
++        p = media_root / r["input_file"]
++        if r["input_file"].strip() and p.suffix.lower() in IMAGE_SUFFIXES and p.exists():
++            idx.add(r["sample_id"], p)
++    if idx.items:
++        for r in test:
++            p = media_root / r["input_file"]
++            if r["input_file"].strip() and p.suffix.lower() in IMAGE_SUFFIXES and p.exists():
++                for hit in idx.query(p)[:1]:
++                    out.append(f"LEAKAGE (possible near-duplicate image, review): test {r['sample_id']} "
++                               f"matches dev {hit['id']} ({hit.get('method')})")
++    for t in test:
++        if not t["claim_text"].strip():
++            continue
++        for d in dev:
++            if d["claim_text"].strip() and similarity(t["claim_text"], d["claim_text"]) >= TEXT_NEAR_DUP:
++                out.append(f"LEAKAGE (near-duplicate claim text, review): test {t['sample_id']} ~ dev {d['sample_id']}")
++                break
++    return out
++
++
+ def main(path: str) -> int:
+     plan = json.loads((ROOT / "eval" / "plan.json").read_text())
+     rows = list(csv.DictReader(open(path, encoding="utf-8")))
+@@ -79,6 +120,7 @@
+         p = ROOT / "data" / "eval_media" / r["input_file"]
+         return hashlib.sha256(p.read_bytes()).hexdigest() if r["input_file"] and p.exists() else ""
+     leak(file_hash, "media file")
++    errors.extend(near_duplicates(rows))
+ 
+     if filled < len(rows):
+         warnings.append(f"{len(rows) - filled} of {len(rows)} rows are still empty templates")
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/integration/run_all.py satyapan-feasibility/integration/run_all.py
+--- /home/claude/satyapan-feasibility/integration/run_all.py	2026-10-30 20:35:27.930666621 +0000
++++ satyapan-feasibility/integration/run_all.py	2026-10-30 21:49:32.630562365 +0000
+@@ -28,6 +28,7 @@
+ from satyapan.http import ApiClient
+ from satyapan.links import rdap, safebrowsing, urlscan
+ from satyapan.llm import llm_extract_claims
++from satyapan.logging_setup import redact
+ from satyapan.media import remote
+ from satyapan.security.uploads import sanitized_image_copy
+ from satyapan.sources import factcheck, pib
+@@ -110,7 +111,7 @@
+                          "has_dates": any(i["published"] for i in items), "ms": ms,
+                          "sample_titles": [i["title"][:90] for i in items[:2]]}
+         except ToolError as err:
+-            out[name] = {"error": err.status.value, "detail": err.message[:120]}
++            out[name] = {"error": err.status.value, "detail": redact(err.message)[:120]}
+     if all("error" in v for v in out.values()):
+         raise ToolError(ToolStatus[next(iter(out.values()))["error"]], "all PIB feeds failed")
+     return out
+@@ -185,7 +186,7 @@
+                 result = fn(client)
+                 record.update(status=ToolStatus.LIVE_SUCCESS.value, result=result)
+             except ToolError as err:
+-                record.update(status=err.status.value, error=err.message[:300], http_status=err.http_status)
++                record.update(status=err.status.value, error=redact(err.message)[:300], http_status=err.http_status)
+             except Exception as exc:   # record unexpected failures rather than hiding them
+                 record.update(status=ToolStatus.SERVICE_ERROR.value, error=f"{type(exc).__name__}: {exc}"[:300])
+         record["elapsed_ms"] = round((time.perf_counter() - start) * 1000, 1)
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/api/app.py satyapan-feasibility/satyapan/api/app.py
+--- /home/claude/satyapan-feasibility/satyapan/api/app.py	2026-10-30 20:27:18.978637556 +0000
++++ satyapan-feasibility/satyapan/api/app.py	2026-10-30 22:48:08.893701055 +0000
+@@ -5,13 +5,19 @@
+ GET  /health
+ 
+ Investigations run in a background thread so the request returns at once. A
+-UI polls the GET endpoint and renders the trace as it grows.
+-Run: uvicorn satyapan.api.app:app --reload
++UI polls the GET endpoint (status: queued -> running -> done | error).
++At most SATYAPAN_MAX_CONCURRENT_JOBS investigations run at once, the rest wait.
++Request bodies must declare Content-Length and are refused before reading if too large.
++Run: uvicorn satyapan.api.app:app
++uvicorn trusts X-Forwarded-For from 127.0.0.1 by default: a proxy on the same host works as is,
++and a local process can fake its address. A proxy on another host needs
++--forwarded-allow-ips=<proxy IP>, otherwise every user shares one rate-limit bucket.
+ """
+ from __future__ import annotations
+ 
+ import logging
+ import threading
++import time
+ import uuid
+ from pathlib import Path
+ 
+@@ -32,12 +38,36 @@
+ app = FastAPI(title="Satyapan", version="0.2.0")
+ CHUNK = 1024 * 1024
+ MAX_UPLOAD = max(settings.max_image_mb, settings.max_video_mb, settings.max_audio_mb) * 1024 * 1024
++MAX_REQUEST = MAX_UPLOAD + 2 * 1024 * 1024      # all files together, plus form fields
++JOBS = threading.BoundedSemaphore(settings.max_concurrent_jobs)
++SWEEP_EVERY_S = 600
++_last_sweep = 0.0
++
++
++def _maybe_sweep() -> None:
++    global _last_sweep
++    if time.time() - _last_sweep > SWEEP_EVERY_S:
++        _last_sweep = time.time()
++        removed = store.sweep()
++        if removed:
++            log(logger, "retention sweep", removed=removed)
++
++
++_maybe_sweep()      # at start-up
+ 
+ 
+ @app.middleware("http")
+-async def rate_limit(request: Request, call_next):
+-    if request.method == "POST" and not bucket.allow(request.client.host if request.client else "unknown"):
+-        return JSONResponse({"error": "rate limit exceeded, try again in a minute"}, status_code=429)
++async def guard(request: Request, call_next):
++    if request.method == "POST":
++        # Refuse oversized or undeclared bodies BEFORE reading them. Without this, Starlette
++        # buffers the whole multipart body (to memory or disk) before any size check runs.
++        declared = request.headers.get("content-length")
++        if declared is None:
++            return JSONResponse({"error": "Content-Length required"}, status_code=411)
++        if not declared.isdigit() or int(declared) > MAX_REQUEST:
++            return JSONResponse({"error": f"request larger than {MAX_REQUEST // (1024 * 1024)} MB"}, status_code=413)
++        if not bucket.allow(request.client.host if request.client else "unknown"):
++            return JSONResponse({"error": "rate limit exceeded, try again in a minute"}, status_code=429)
+     return await call_next(request)
+ 
+ 
+@@ -61,13 +91,17 @@
+ 
+ 
+ def _work(state: dict) -> None:
+-    try:
+-        state = run(state, Context.default())
+-        store.save(state["id"], {"status": "done", "report": to_report(state).to_dict()})
+-        log(logger, "investigation done", id=state["id"], verdict=state["verdict"]["label"])
+-    except Exception as exc:  # the API must report failure, not hang
+-        logger.exception("investigation failed")
+-        store.save(state["id"], {"status": "error", "error": type(exc).__name__})
++    with JOBS:
++        try:
++            store.save(state["id"], {"status": "running"})
++            state = run(state, Context.default())
++            store.save(state["id"], {"status": "done", "report": to_report(state).to_dict()})
++            log(logger, "investigation done", id=state["id"], verdict=state["verdict"]["label"])
++        except Exception as exc:  # the API must report failure, not hang
++            logger.exception("investigation failed")
++            store.save(state["id"], {"status": "error", "error": type(exc).__name__})
++        finally:
++            store.discard_files(state["id"])     # uploads and frames are not kept after the report
+ 
+ 
+ @app.post("/v1/investigations", status_code=202)
+@@ -85,9 +119,10 @@
+                                "third_party_media": consent_third_party_media})
+     folder = store.upload_dir(state["id"])
+     state["uploads"] = [(_save_upload(f, folder), f.filename or "upload") for f in files]
+-    store.save(state["id"], {"status": "running"})
++    store.save(state["id"], {"status": "queued"})
+     threading.Thread(target=_work, args=(state,), daemon=True).start()
+-    return {"id": state["id"], "status": "running"}
++    _maybe_sweep()
++    return {"id": state["id"], "status": "queued"}
+ 
+ 
+ @app.get("/v1/investigations/{investigation_id}")
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/claims.py satyapan-feasibility/satyapan/claims.py
+--- /home/claude/satyapan-feasibility/satyapan/claims.py	2026-10-30 20:28:28.938641714 +0000
++++ satyapan-feasibility/satyapan/claims.py	2026-10-30 22:24:19.052703367 +0000
+@@ -14,10 +14,10 @@
+ 
+ TLDS = r"(?:in|com|org|net|info|xyz|top|online|site|shop|co|live|club|link|cc|me|io|app|biz|vip|icu|buzz)"
+ URL_RE = re.compile(
+-    r"(?i)\b((?:https?://|www\.)[^\s<>\"'()]+|(?:[a-z0-9-]+\.)+" + TLDS + r"(?:/[^\s<>\"'()]*)?)(?![\w.])")
++    r"(?i)\b((?:https?://|www\.)[^\s<>\"'()।॥]+|(?:[a-z0-9-]+\.)+" + TLDS + r"(?:/[^\s<>\"'()।॥]*)?)(?![\w.])")
+ PHONE_RE = re.compile(r"(?<!\d)(?:\+91[\s-]?|0)?[6-9]\d{4}[\s-]?\d{5}(?!\d)")
+ AMOUNT_RE = re.compile(
+-    r"(?i)(?:₹|\brs\.?|\binr|rupees?|रुपये|रुपए|रु\.)\s?\d[\d,]*(?:\.\d+)?"
++    r"(?i)(?:₹|\brs\.?|\binr|rupees?|रुपये|रुपए|रु\.)\s?\d[\d,]*(?:\.\d+)?(?:\s?(?:lakh|crore|लाख|करोड़))?"
+     r"|\d[\d,]*(?:\.\d+)?\s?(?:₹|rupees?|रुपये|रुपए|lakh|crore|लाख|करोड़|రూపాయలు)")
+ DATE_RE = re.compile(r"(?i)\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b|\b\d{1,2}\s(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b")
+ 
+@@ -63,6 +63,49 @@
+     return best if shares[best] >= 0.7 else "mixed"
+ 
+ 
++MULTIPLIERS = {"lakh": 1e5, "लाख": 1e5, "crore": 1e7, "करोड़": 1e7}
++NUMBER_RE = re.compile(r"(?<![\d.,])\d[\d,]*(?:\.\d+)?(?![\d])\s?(lakh|crore|लाख|करोड़)?", re.I)
++
++
++def amount_value(amount: str) -> float | None:
++    """'Rs 2,000' -> 2000.0, '2 lakh' -> 200000.0. None if no number."""
++    m = NUMBER_RE.search(amount)
++    if not m:
++        return None
++    digits = re.match(r"\d[\d,]*(?:\.\d+)?", m.group(0)).group(0).replace(",", "")
++    return float(digits) * MULTIPLIERS.get((m.group(1) or "").lower(), 1)
++
++
++def number_values(text: str) -> set[float]:
++    """Every whole number in a text, with lakh/crore applied. Used to compare amounts exactly."""
++    out = set()
++    for m in NUMBER_RE.finditer(text):
++        digits = re.match(r"\d[\d,]*(?:\.\d+)?", m.group(0)).group(0).replace(",", "")
++        out.add(float(digits) * MULTIPLIERS.get((m.group(1) or "").lower(), 1))
++    return out
++
++
++MONTHS = {m: i + 1 for i, m in enumerate(("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
++                                          "nov", "dec"))}
++_MON = r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?"
++DATE_FORMS = [
++    (re.compile(r"(?i)\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?" + _MON), lambda m: (int(m[1]), MONTHS[m[2].lower()])),
++    (re.compile(r"(?i)\b" + _MON + r"\s+(\d{1,2})(?:st|nd|rd|th)?\b"), lambda m: (int(m[2]), MONTHS[m[1].lower()])),
++    (re.compile(r"\b(\d{1,2})[/.-](\d{1,2})[/.-]\d{2,4}\b"), lambda m: (int(m[1]), int(m[2]))),   # Indian D/M/Y
++]
++
++
++def date_values(text: str) -> set[tuple[int, int]]:
++    """(day, month) pairs for English and numeric dates. Hindi and Telugu month names are NOT parsed."""
++    out = set()
++    for pattern, conv in DATE_FORMS:
++        for m in pattern.finditer(text):
++            day, month = conv(m)
++            if 1 <= day <= 31 and 1 <= month <= 12:
++                out.add((day, month))
++    return out
++
++
+ def _find(words: dict[str, list[str]], text: str) -> list[str]:
+     low = text.lower()
+     return sorted({w for lang in words.values() for w in lang if w in low})
+@@ -71,7 +114,7 @@
+ def extract_urls(text: str) -> list[str]:
+     urls = []
+     for m in URL_RE.findall(text):
+-        url = m.rstrip(".,;:!?)]}'\"")
++        url = m.rstrip(".,;:!?)]}'\"।॥…。，、！？")
+         if not url.lower().startswith(("http://", "https://")):
+             url = "http://" + url
+         urls.append(url)
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/config.py satyapan-feasibility/satyapan/config.py
+--- /home/claude/satyapan-feasibility/satyapan/config.py	2026-10-30 20:17:11.934601471 +0000
++++ satyapan-feasibility/satyapan/config.py	2026-10-30 21:50:45.942837895 +0000
+@@ -53,6 +53,7 @@
+     ai_image_detector_calibrated: bool
+     tesseract_langs: str
+     rate_limit_per_minute: int
++    max_concurrent_jobs: int
+ 
+ 
+ @lru_cache(maxsize=1)
+@@ -84,4 +85,7 @@
+         ai_image_detector_calibrated=_bool("AI_IMAGE_DETECTOR_CALIBRATED"),
+         tesseract_langs=_str("TESSERACT_LANGS", "eng+hin+tel"),
+         rate_limit_per_minute=_int("SATYAPAN_RATE_LIMIT_PER_MINUTE", 10),
++        # Investigations are CPU-bound (OCR, ORB, FFmpeg). More parallel jobs than cores made
++        # every job slower and pushed OCR past its timeout in the audit, so jobs are queued.
++        max_concurrent_jobs=max(1, _int("SATYAPAN_MAX_CONCURRENT_JOBS", max(1, (os.cpu_count() or 2) // 2))),
+     )
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/errors.py satyapan-feasibility/satyapan/errors.py
+--- /home/claude/satyapan-feasibility/satyapan/errors.py	2026-10-30 20:17:16.430601739 +0000
++++ satyapan-feasibility/satyapan/errors.py	2026-10-30 21:49:20.951559230 +0000
+@@ -18,7 +18,11 @@
+ 
+ 
+ class ToolError(Exception):
++    """Messages are redacted on creation, so a service that echoes a key cannot leak it into a report."""
++
+     def __init__(self, status: ToolStatus, message: str, http_status: int | None = None) -> None:
++        from satyapan.logging_setup import redact
++        message = redact(message)
+         super().__init__(f"{status.value}: {message}")
+         self.status = status
+         self.message = message
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/links/rdap.py satyapan-feasibility/satyapan/links/rdap.py
+--- /home/claude/satyapan-feasibility/satyapan/links/rdap.py	2026-10-30 20:21:08.890615557 +0000
++++ satyapan-feasibility/satyapan/links/rdap.py	2026-10-30 21:56:14.353429280 +0000
+@@ -13,6 +13,7 @@
+ from satyapan.config import get_settings
+ from satyapan.errors import ToolError, ToolStatus
+ from satyapan.http import ApiClient, json_or_error
++from satyapan.security.ssrf import valid_hostname
+ 
+ BOOTSTRAP = "https://data.iana.org/rdap/dns.json"
+ 
+@@ -38,6 +39,9 @@
+ 
+ 
+ def lookup(client: ApiClient, registered_domain: str) -> dict:
++    # Defence in depth: the domain becomes part of a request path, so only DNS names go out.
++    if not valid_hostname(registered_domain):
++        raise ToolError(ToolStatus.INPUT_ERROR, "not a valid domain name, RDAP not queried")
+     tld = registered_domain.rsplit(".", 1)[-1].lower()
+     base = server_for(client, tld)
+     if base is None:
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/links/urlinfo.py satyapan-feasibility/satyapan/links/urlinfo.py
+--- /home/claude/satyapan-feasibility/satyapan/links/urlinfo.py	2026-10-30 20:20:55.990614790 +0000
++++ satyapan-feasibility/satyapan/links/urlinfo.py	2026-10-30 22:25:00.772687729 +0000
+@@ -1,10 +1,14 @@
+ """Offline link analysis: parsing, punycode and homoglyphs, lookalike scoring, shorteners."""
+ from __future__ import annotations
+ 
++import re
++import unicodedata
++from urllib.parse import parse_qsl, urlsplit
++
+ from rapidfuzz import fuzz
+ 
+-from satyapan.security.ssrf import validate_url
+-from satyapan.sources.official import domain_info
++from satyapan.security.ssrf import normalise_url, validate_url
++from satyapan.sources.official import OFFICIAL_SUFFIXES, domain_info
+ 
+ SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "cutt.ly", "rb.gy", "is.gd", "ow.ly",
+               "shorturl.at", "tiny.cc", "rebrand.ly", "t.ly", "s.id", "v.gd"}
+@@ -29,13 +33,69 @@
+     return unicode_host(label).lower().translate(CONFUSABLES).replace("-", "")
+ 
+ 
++GENERIC_LABELS = {"www", "india", "gov", "govt", "mail", "online", "portal"}
++REDIRECT_KEYS = {"url", "u", "redirect", "redirect_url", "redirect_uri", "redirecturl", "next", "target", "dest",
++                 "destination", "goto", "link", "out", "to", "return", "returnurl", "return_url", "continue", "r", "q"}
++DOMAIN_LIKE = re.compile(r"(?i)^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,24}(/|$)")
++
++
++def embedded_targets(url: str) -> list[str]:
++    """Other URLs carried inside a link (open-redirect style): ?url=https://evil.top, /out/https://evil.top.
++
++    Query values are percent-decoded. A value counts if it starts with http(s):// or www., or if
++    its key is a typical redirect key and the value looks like a domain."""
++    try:
++        parts = urlsplit(normalise_url(url))
++    except ValueError:
++        return []
++    out = []
++    for key, value in parse_qsl(parts.query, keep_blank_values=False):
++        v = value.strip()
++        if re.match(r"(?i)^(https?://|www\.)", v) or (key.lower() in REDIRECT_KEYS and DOMAIN_LIKE.match(v)):
++            out.append(v if "://" in v else "http://" + v)
++    m = re.search(r"(?i)/(https?:/{1,2}[^\s]+)", parts.path)
++    if m:
++        out.append(re.sub(r"(?i)^(https?):/{1,2}", r"\1://", m.group(1)))
++    return list(dict.fromkeys(out))
++
++
++def _naive_host_info(original: str) -> dict | None:
++    """The host as a backslash-unaware parser (and many readers) would see it."""
++    try:
++        host = urlsplit(original.strip()).hostname or ""
++    except ValueError:
++        return None
++    return domain_info(host) if host else None
++
++
++def official_labels(official_domains: set[str]) -> set[str]:
++    """First labels of official domains (pmkisan, uidai, pib ...), used to spot them inside other hosts."""
++    return {d.split(".")[0] for d in official_domains | {"india.gov.in", "pib.gov.in"}
++            if len(d.split(".")[0]) >= 3 and d.split(".")[0] not in GENERIC_LABELS}
++
++
+ def analyse_url(url: str, official_domains: set[str]) -> dict:
++    """Offline facts and flags for one link.
++
++    Impersonation flags (used as STRONG evidence when a message invokes the government):
++      official_name_inside_other_domain  uidai.gov.in.verify-kyc.top
++      lookalike_of_official_domain       pmkisam.in, xn--pb-lmc.in (Cyrillic i)
++      official_label_in_host             pmkisan-gov.top, pib-relief.top (an official name as a whole label part)
++      official_name_in_userinfo          https://pib.gov.in@evil.top/ and http://x.com\\@pib.gov.in/
++    Weaker signals (MODERATE at most): gov_token_outside_gov_in, official_label_fragment_in_host,
++    punycode_host. Foreign government domains (state.gov, gov.uk) are flagged as such and are
++    never treated as impersonation.
++    """
++    original = url
++    url = normalise_url(url)
+     check = validate_url(url, resolve=False)
+     info = domain_info(url)
+     host_u = unicode_host(info["host"])
+     flags: list[str] = []
+     if not check.ok:
+         flags.append("unsafe_or_local_target")
++    if not info["valid_host"]:
++        flags.append("invalid_hostname")
+     if url.lower().startswith("http://"):
+         flags.append("not_https")
+     if "xn--" in info["host"]:
+@@ -44,23 +104,49 @@
+         flags.append("non_ascii_host")
+     if info["registered"] in SHORTENERS:
+         flags.append("url_shortener")
+-    allowlisted = info["registered"] in official_domains
++    if "\\" in original:
++        flags.append("backslash_in_url")
++    stripped = original.strip()
++    if any(unicodedata.category(ch) == "Cf" or "\uff00" <= ch <= "\uffef" or ch == "\u3002" for ch in stripped):
++        flags.append("hidden_or_fullwidth_characters")
++    targets = [t for t in embedded_targets(url) if domain_info(t)["registered"] != info["registered"]]
++    if targets:
++        flags.append("redirects_to_other_site")
++    allowlisted = info["valid_host"] and info["registered"] in official_domains
+     official = info["official_suffix"] or allowlisted
++    foreign_gov = (not official) and ".gov." in f".{info['suffix']}."
++    if foreign_gov:
++        flags.append("foreign_government_domain")
++    naive = _naive_host_info(original) if "\\" in original else None
++    if info["userinfo"]:
++        flags.append("userinfo_in_url")
+     closest, similarity = None, 0.0
+-    if not official:
++    if not official and info["valid_host"]:
++        labels = official_labels(official_domains)
+         label = skeleton(info["registered"].split(".")[0])
+         for dom in official_domains | {"india.gov.in", "pib.gov.in"}:
+             score = fuzz.ratio(label, skeleton(dom.split(".")[0]))
+             if score > similarity:
+                 closest, similarity = dom, score
+-        if "gov" in info["host"]:
++        name_part = info["host"][: -len(info["suffix"])] if info["suffix"] else info["host"]
++        tokens = [t for t in re.split(r"[.\-_]+", name_part) if t]
++        if "gov" in name_part and not foreign_gov:
+             flags.append("gov_token_outside_gov_in")
+         if any(dom in info["host"] and info["host"] != dom for dom in official_domains):
+             flags.append("official_name_inside_other_domain")
+         if similarity >= 85:
+             flags.append("lookalike_of_official_domain")
++        if any(t in labels for t in tokens):
++            flags.append("official_label_in_host")
++        elif any(lab in t for t in tokens for lab in labels if len(lab) >= 5):
++            flags.append("official_label_fragment_in_host")
+         if any(t in info["host"] for t in SCHEME_TOKENS):
+             flags.append("scheme_or_reward_words")
++        ui = info["userinfo"].lower()
++        if ui and (any(d in ui for d in official_domains | OFFICIAL_SUFFIXES) or "gov" in ui):
++            flags.append("official_name_in_userinfo")
++        if naive and (naive["official_suffix"] or naive["registered"] in official_domains):
++            flags.append("official_name_in_userinfo")   # x.com\@pib.gov.in reads as pib.gov.in, opens x.com
+     return {"url": url, **info, "unicode_host": host_u, "official": official, "allowlisted": allowlisted,
+-            "closest_official": closest, "similarity": round(similarity, 1), "flags": flags,
+-            "url_check": check.reason}
++            "closest_official": closest, "similarity": round(similarity, 1), "flags": list(dict.fromkeys(flags)),
++            "embedded_targets": targets, "url_check": check.reason}
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/logging_setup.py satyapan-feasibility/satyapan/logging_setup.py
+--- /home/claude/satyapan-feasibility/satyapan/logging_setup.py	2026-10-30 20:17:28.382602449 +0000
++++ satyapan-feasibility/satyapan/logging_setup.py	2026-10-30 21:49:20.951051717 +0000
+@@ -3,6 +3,7 @@
+ 
+ import json
+ import logging
++import os
+ import re
+ 
+ _PATTERNS = [
+@@ -12,9 +13,20 @@
+ ]
+ 
+ 
++SECRET_ENV = ("GOOGLE_API_KEY", "GOOGLE_VISION_API_KEY", "URLSCAN_API_KEY", "SIGHTENGINE_USER",
++              "SIGHTENGINE_SECRET", "VIRUSTOTAL_API_KEY", "LLM_API_KEY")
++
++
+ def redact(text: str) -> str:
++    """Remove secrets: key-like URL parameters and headers, plus the literal value of every
++    configured secret (a service may echo a key back in an error body, in any format)."""
++    text = str(text)
+     for pattern, repl in _PATTERNS:
+         text = pattern.sub(repl, text)
++    for name in SECRET_ENV:
++        value = os.environ.get(name, "").strip()
++        if len(value) >= 6:
++            text = text.replace(value, "REDACTED")
+     return text
+ 
+ 
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/media/audio.py satyapan-feasibility/satyapan/media/audio.py
+--- /home/claude/satyapan-feasibility/satyapan/media/audio.py	2026-10-30 20:22:35.570620709 +0000
++++ satyapan-feasibility/satyapan/media/audio.py	2026-10-30 21:51:27.059079516 +0000
+@@ -85,6 +85,33 @@
+                             "query_hashes": len(fp), "match": aligned >= MIN_ALIGNED, "meta": self.meta[item_id]})
+         return sorted(results, key=lambda r: -r["aligned_hits"])
+ 
++    def save(self, folder: Path) -> None:
++        """Store fingerprints only (hashes and anchor times), never the audio itself."""
++        import json
++        folder.mkdir(parents=True, exist_ok=True)
++        ids = list(self.meta)
++        pos = {item_id: i for i, item_id in enumerate(ids)}
++        rows = [(h, pos[item_id], t) for h, entries in self.table.items() for item_id, t in entries]
++        arr = np.array(rows, dtype=np.int64).reshape(-1, 3)
++        np.savez_compressed(folder / "fingerprints.npz", rows=arr)
++        (folder / "index.json").write_text(json.dumps({"ids": ids, "meta": self.meta, "sr": SR, "hop": HOP,
++                                                       "min_aligned": MIN_ALIGNED}, ensure_ascii=False, indent=1),
++                                           encoding="utf-8")
++
++    @classmethod
++    def load(cls, folder: Path) -> "AudioIndex":
++        import json
++        info = json.loads((folder / "index.json").read_text(encoding="utf-8"))
++        if info.get("sr") != SR or info.get("hop") != HOP:
++            raise ValueError("audio index was built with different fingerprint settings, rebuild it")
++        idx = cls()
++        idx.meta = info["meta"]
++        ids = info["ids"]
++        with np.load(folder / "fingerprints.npz") as data:
++            for h, i, t in data["rows"].tolist():
++                idx.table[h].append((ids[i], t))
++        return idx
++
+ 
+ def voice_authenticity(path: Path) -> dict:
+     """Default: UNVERIFIED. An optional detector runs only if configured AND calibrated."""
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/media/remote.py satyapan-feasibility/satyapan/media/remote.py
+--- /home/claude/satyapan-feasibility/satyapan/media/remote.py	2026-10-30 20:22:05.542618924 +0000
++++ satyapan-feasibility/satyapan/media/remote.py	2026-10-30 21:49:10.251071384 +0000
+@@ -20,6 +20,16 @@
+ SIGHTENGINE_URL = "https://api.sightengine.com/1.0/check.json"
+ 
+ 
++def vision_configured(s=None) -> bool:
++    s = s or get_settings()
++    return bool(s.google_vision_api_key or (s.vision_use_gcloud and s.google_cloud_project))
++
++
++def sightengine_configured(s=None) -> bool:
++    s = s or get_settings()
++    return bool(s.sightengine_user and s.sightengine_secret)
++
++
+ def _vision_auth() -> tuple[dict, dict]:
+     s = get_settings()
+     if s.google_vision_api_key:
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/ocr.py satyapan-feasibility/satyapan/ocr.py
+--- /home/claude/satyapan-feasibility/satyapan/ocr.py	2026-10-30 20:19:46.262610645 +0000
++++ satyapan-feasibility/satyapan/ocr.py	2026-10-30 22:15:48.245658000 +0000
+@@ -2,15 +2,34 @@
+ 
+ macOS: brew install tesseract tesseract-lang   (includes hin and tel)
+ Accuracy on real WhatsApp screenshots is unmeasured until the dataset run.
++
++Safeguards added in the audit round:
++  * Large images are downscaled before OCR (phone screenshots keep their full size).
++  * Tesseract runs single-threaded (OMP_THREAD_LIMIT=1). With several jobs at once,
++    its default multithreading oversubscribed the CPU and hit the timeout.
++  * A line-level confidence gate: only text lines whose mean word confidence is at
++    least GOOD_LINE_CONF are kept, and the result is discarded if fewer than
++    MIN_GOOD_WORDS confident words remain. Junk from photo regions is dropped while a
++    caption next to a photo survives. The values are a first guess, NOT tuned on any
++    evaluation data. Real WhatsApp-screenshot accuracy is still unmeasured.
+ """
+ from __future__ import annotations
+ 
++import os
+ import shutil
+ import subprocess
++import tempfile
+ import time
+ from functools import lru_cache
+ from pathlib import Path
+ 
++from PIL import Image, ImageOps
++
++MAX_OCR_SIDE = 2600        # px, long side. A 1080x2400 phone screenshot is not resized.
++GOOD_LINE_CONF = 60.0
++MIN_GOOD_WORDS = 3
++GOOD_WORD_CONF = 60.0
++
+ 
+ @lru_cache(maxsize=1)
+ def available_languages() -> set[str]:
+@@ -21,15 +40,63 @@
+     return {ln.strip() for ln in lines[1:] if ln.strip() and " " not in ln.strip()}
+ 
+ 
++def _prepared_copy(path: Path) -> Path | None:
++    """A downscaled PNG copy if the image is larger than MAX_OCR_SIDE, else None."""
++    with Image.open(path) as im:
++        if max(im.size) <= MAX_OCR_SIDE:
++            return None
++        im.draft("RGB", (MAX_OCR_SIDE, MAX_OCR_SIDE))   # JPEG: decode at reduced scale, saves memory
++        im = ImageOps.exif_transpose(im).convert("RGB")
++        im.thumbnail((MAX_OCR_SIDE, MAX_OCR_SIDE))
++        fd, tmp = tempfile.mkstemp(suffix=".png", prefix="satyapan_ocr_")
++        os.close(fd)
++        im.save(tmp, "PNG")
++        return Path(tmp)
++
++
++def _parse_tsv(tsv: str) -> tuple[str, float, int]:
++    """Rebuild text from Tesseract TSV, keeping confident lines only.
++
++    Returns (kept text, mean confidence over all words, confident words in kept lines)."""
++    lines: dict[tuple, list[tuple[str, float]]] = {}
++    for row in tsv.splitlines()[1:]:
++        cols = row.split("\t")
++        if len(cols) < 12 or not cols[11].strip():
++            continue
++        try:
++            conf = float(cols[10])
++        except ValueError:
++            continue
++        if conf >= 0:
++            lines.setdefault((cols[2], cols[3], cols[4]), []).append((cols[11].strip(), conf))
++    all_confs = [c for words in lines.values() for _, c in words]
++    kept, good = [], 0
++    for words in lines.values():
++        if sum(c for _, c in words) / len(words) >= GOOD_LINE_CONF:
++            kept.append(" ".join(w for w, _ in words))
++            good += sum(1 for w, c in words if c >= GOOD_WORD_CONF and sum(ch.isalnum() for ch in w) >= 2)
++    return "\n".join(kept), (sum(all_confs) / len(all_confs) if all_confs else 0.0), good
++
++
+ def ocr_image(path: Path, wanted: str = "eng+hin+tel", timeout: float = 30.0) -> dict:
+     langs = [lang for lang in wanted.split("+") if lang in available_languages()]
+     if not langs:
+         return {"ok": False, "text": "", "langs": [], "ms": 0.0,
+                 "error": "tesseract or language data missing (brew install tesseract tesseract-lang)"}
+     start = time.perf_counter()
+-    out = subprocess.run(["tesseract", str(path), "stdout", "-l", "+".join(langs), "--psm", "6"],
+-                         capture_output=True, text=True, timeout=timeout, check=False)
++    small = _prepared_copy(path)
++    try:
++        out = subprocess.run(["tesseract", str(small or path), "stdout", "-l", "+".join(langs), "--psm", "6", "-c", "tessedit_create_tsv=1"],
++                             capture_output=True, text=True, timeout=timeout, check=False,
++                             env={**os.environ, "OMP_THREAD_LIMIT": "1"})
++    finally:
++        if small:
++            small.unlink(missing_ok=True)
+     ms = round((time.perf_counter() - start) * 1000, 1)
+     if out.returncode != 0:
+         return {"ok": False, "text": "", "langs": langs, "ms": ms, "error": out.stderr.strip()[:200]}
+-    return {"ok": True, "text": out.stdout.strip(), "langs": langs, "ms": ms, "error": None}
++    text, mean_conf, good = _parse_tsv(out.stdout)
++    low = good < MIN_GOOD_WORDS
++    return {"ok": True, "text": "" if low else text.strip(), "langs": langs, "ms": ms, "error": None,
++            "mean_conf": round(mean_conf, 1), "confident_words": good, "low_confidence": low,
++            "downscaled": small is not None}
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/pipeline/citations.py satyapan-feasibility/satyapan/pipeline/citations.py
+--- /home/claude/satyapan-feasibility/satyapan/pipeline/citations.py	2026-10-30 20:23:55.914625485 +0000
++++ satyapan-feasibility/satyapan/pipeline/citations.py	2026-10-30 21:52:10.107082075 +0000
+@@ -3,22 +3,58 @@
+ Every statement in a report must:
+   1. cite at least one evidence id that exists,
+   2. cite only evidence whose stance fits the verdict it explains,
+-  3. mention no number or URL that is absent from the cited evidence.
+-Rule 3 is what stops an LLM rewrite from adding figures or links that were never retrieved.
++  3. mention no number or URL that is absent from the cited evidence,
++  4. use no verdict word that disagrees with the verdict ("genuine", "safe" in a FAKE
++     report, "fake", "scam" in a GENUINE report, either kind in an UNVERIFIED report)
++     unless that exact word is in the cited evidence (a fact-check rating "False", say),
++  5. stay close to the cited evidence: at least 60% of its content words must appear in it.
++Rules 3 to 5 are what stop an LLM rewrite from adding figures, links, conclusions or
++claims that were never retrieved. Deterministic template statements are copied from the
++evidence, so they always pass. Rule 5 is lexical: an LLM rewrite into Hindi or Telugu of
++English evidence fails it, and the report then falls back to the English templates.
+ """
+ from __future__ import annotations
+ 
+ import json
+ import re
++import string
+ 
+ from satyapan.models import Evidence, Statement
+ 
+ NUMBER_RE = re.compile(r"\d[\d,.]*\d|\d")
+ URL_RE = re.compile(r"https?://[^\s)\]]+")
++POSITIVE_WORDS = {"genuine", "authentic", "legitimate", "legit", "real", "true", "correct", "accurate", "verified",
++                  "safe", "official", "confirmed", "सही", "असली", "सच", "सत्य", "सुरक्षित", "నిజం", "నిజమైన", "సురక్షితం"}
++NEGATIVE_WORDS = {"fake", "false", "hoax", "scam", "fraud", "fraudulent", "misleading", "phishing", "untrue", "bogus",
++                  "फर्जी", "फ़र्ज़ी", "झूठ", "झूठा", "गलत", "धोखा", "फेक", "నకిలీ", "అబద్ధం", "మోసం"}
++FORBIDDEN = {"FAKE": POSITIVE_WORDS, "GENUINE": NEGATIVE_WORDS}
++STOPWORDS = {"this", "that", "with", "from", "have", "been", "were", "does", "they", "their", "there", "which",
++             "what", "when", "will", "would", "should", "could", "about", "into", "your", "more", "also", "only",
++             "than", "then", "them", "these", "those", "such", "very", "just", "over", "under", "after", "before",
++             "because", "while", "where", "being", "other", "some", "here", "said", "says", "shows", "show"}
++MIN_OVERLAP = 0.6
++PUNCT = string.punctuation + "।॥“”‘’…"
+ 
+ 
+ def _evidence_text(e: Evidence) -> str:
+-    return " ".join([e.source_name or "", e.source_url or "", e.established, json.dumps(e.data, default=str)])
++    return " ".join([e.source_name or "", e.source_url or "", e.established, json.dumps(e.data, default=str,
++                                                                                      ensure_ascii=False)])
++
++
++def _words(text: str) -> list[str]:
++    return [w.strip(PUNCT) for w in URL_RE.sub(" ", text).lower().split() if w.strip(PUNCT)]
++
++
++def verdict_word_problems(text: str, corpus_lower: str, verdict: str) -> list[str]:
++    forbidden = FORBIDDEN.get(verdict, POSITIVE_WORDS | NEGATIVE_WORDS)
++    return [w for w in _words(text) if w in forbidden and not re.search(rf"(?<!\w){re.escape(w)}(?!\w)", corpus_lower)]
++
++
++def overlap(text: str, corpus_lower: str) -> float:
++    content = [w for w in _words(text) if len(w) >= 4 and w not in STOPWORDS and not NUMBER_RE.fullmatch(w)]
++    if not content:
++        return 1.0
++    return sum(w in corpus_lower for w in content) / len(content)
+ 
+ 
+ def validate(statements: list[Statement], evidence: list[Evidence], verdict: str) -> tuple[list[Statement], list[dict]]:
+@@ -45,5 +81,16 @@
+             problems.append({"statement": st.text, "problem": "content not found in cited evidence",
+                              "numbers": bad_numbers, "urls": bad_urls})
+             continue
++        corpus_lower = corpus.lower()
++        bad_words = verdict_word_problems(st.text, corpus_lower, verdict)
++        if bad_words:
++            problems.append({"statement": st.text, "problem": f"wording disagrees with the {verdict} verdict",
++                             "words": bad_words})
++            continue
++        ratio = overlap(st.text, corpus_lower)
++        if ratio < MIN_OVERLAP:
++            problems.append({"statement": st.text, "problem": "statement is not grounded in the cited evidence",
++                             "overlap": round(ratio, 2)})
++            continue
+         kept.append(st)
+     return kept, problems
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/pipeline/graph.py satyapan-feasibility/satyapan/pipeline/graph.py
+--- /home/claude/satyapan-feasibility/satyapan/pipeline/graph.py	2026-10-30 20:46:22.258705516 +0000
++++ satyapan-feasibility/satyapan/pipeline/graph.py	2026-10-30 22:24:46.470058063 +0000
+@@ -12,6 +12,7 @@
+ """
+ from __future__ import annotations
+ 
++import subprocess
+ import time
+ import uuid
+ from dataclasses import dataclass, field
+@@ -19,12 +20,13 @@
+ 
+ from rapidfuzz import fuzz
+ 
+-from satyapan.claims import extract_claims, normalize
++from satyapan.claims import amount_value, date_values, extract_claims, extract_urls, normalize, number_values
+ from satyapan.config import Settings, get_settings
+ from satyapan.errors import ToolError, ToolStatus
+ from satyapan.http import ApiClient
++from satyapan.logging_setup import redact
+ from satyapan.links import rdap, safebrowsing, urlscan
+-from satyapan.links.urlinfo import analyse_url
++from satyapan.links.urlinfo import analyse_url, embedded_targets
+ from satyapan.llm import llm_extract_claims
+ from satyapan.media import c2pa_inspect, remote
+ from satyapan.media.audio import AudioIndex, voice_authenticity
+@@ -40,12 +42,21 @@
+ from satyapan.security.ssrf import validate_url
+ from satyapan.security.uploads import sanitized_image_copy, validate_upload
+ from satyapan.sources import factcheck
++from satyapan.sources.official import domain_info
+ from satyapan.sources.pib import PibStore
+ from satyapan.sources.textindex import BM25
+ 
+ FC_MATCH, FC_POSSIBLE, KNOWN_MATCH = 85, 70, 85
+-IMPERSONATION_FLAGS = {"gov_token_outside_gov_in", "official_name_inside_other_domain",
+-                       "lookalike_of_official_domain", "punycode_host"}
++# Strong: the link is built to look like a specific official site.
++IMPERSONATION_FLAGS = {"official_name_inside_other_domain", "lookalike_of_official_domain",
++                       "official_label_in_host", "official_name_in_userinfo"}
++# Moderate: suspicious, but legitimate sites can show it too (mygov-style names, IDN domains).
++WEAK_IMPERSONATION_FLAGS = {"gov_token_outside_gov_in", "official_label_fragment_in_host", "punycode_host",
++                            "hidden_or_fullwidth_characters"}
++# Calls to action that involve the link itself. "share" and "forward" do not.
++LINK_CTAS = {"click", "apply now", "register", "claim now", "download", "kyc", "otp", "link below",
++             "क्लिक", "आवेदन", "रजिस्टर", "लिंक", "క్లిక్", "దరఖాస్తు", "లింక్", "రిజిస్టర్"}
++URL_RULES_KEY = "url_rules"   # all lexical link rules are ONE source: they count once
+ FAILED = {ToolStatus.AUTH_REQUIRED, ToolStatus.BLOCKED, ToolStatus.SERVICE_ERROR, ToolStatus.RATE_LIMITED}
+ 
+ 
+@@ -80,11 +91,22 @@
+         return cls(client=client or ApiClient(s), settings=s, pib=PibStore(d / "pib_releases.jsonl"),
+                    known_claims=known,
+                    image_index=ImageIndex.load(d / "image_index") if (d / "image_index" / "index.json").exists() else None,
+-                   official_domains=load_allowlist(d / "official_domains.txt"),
+-                   factcheckers=load_allowlist(d / "factcheckers.txt"),
++                   audio_index=AudioIndex.load(d / "audio_index") if (d / "audio_index" / "index.json").exists() else None,
++                   official_domains=load_allowlist(_data_or_template(d, "official_domains.txt")),
++                   factcheckers=load_allowlist(_data_or_template(d, "factcheckers.txt")),
+                    budget=DailyBudget(d / "budget.json"), work_dir=d / "work")
+ 
+ 
++def _data_or_template(data_dir: Path, name: str) -> Path:
++    """The operator's list in the data folder, else the shipped template.
++
++    Before the audit fix a fresh install had EMPTY lists (nothing copies the templates), so
++    rbi.org.in was not official and every fact-checker counted as unknown."""
++    from satyapan.config import ROOT
++    own = data_dir / name
++    return own if own.exists() else ROOT / "templates" / name
++
++
+ def new_state(text: str = "", links: list[str] | None = None, media: list[tuple[Path, str]] | None = None,
+               consent: dict | None = None) -> dict:
+     return {"id": uuid.uuid4().hex[:12], "text": text or "", "user_links": links or [], "uploads": media or [],
+@@ -102,9 +124,11 @@
+         status = ToolStatus.LOCAL_SUCCESS if local else ToolStatus.LIVE_SUCCESS
+         detail = ""
+     except ToolError as err:
+-        out, status, detail = None, err.status, err.message[:160]
+-    except (OSError, ValueError, RuntimeError) as err:
+-        out, status, detail = None, ToolStatus.SERVICE_ERROR, f"{type(err).__name__}: {str(err)[:140]}"
++        out, status, detail = None, err.status, redact(err.message)[:160]
++    except subprocess.TimeoutExpired as err:
++        out, status, detail = None, ToolStatus.SERVICE_ERROR, f"timed out after {err.timeout} s"
++    except Exception as err:  # noqa: BLE001  a tool failure is recorded, never fatal for the investigation
++        out, status, detail = None, ToolStatus.SERVICE_ERROR, redact(f"{type(err).__name__}: {str(err)[:140]}")
+     state["tool_runs"].append(ToolRun(tool, status.value, target, round((time.perf_counter() - start) * 1000, 1), detail))
+     if status in FAILED:
+         state["failed_tools"].append(tool)
+@@ -115,12 +139,31 @@
+     state["tool_runs"].append(ToolRun(tool, status.value, target, 0.0, detail))
+ 
+ 
++def _budget_ok(state: dict, ctx: Context, tool: str, target: str, configured: bool) -> bool:
++    """Spend one unit of a paid tool's daily budget. Unconfigured tools are tried (they report
++    AUTH_REQUIRED) without spending budget. A budget-file problem skips the tool, it never crashes."""
++    if not configured or ctx.budget is None:
++        return True
++    try:
++        if ctx.budget.take(tool):
++            return True
++        _skip(state, tool, target, ToolStatus.RATE_LIMITED, "daily budget for this tool is used up")
++    except OSError as err:
++        _skip(state, tool, target, ToolStatus.SERVICE_ERROR, f"budget file error: {type(err).__name__}")
++    state["failed_tools"].append(tool)
++    return False
++
++
+ # ---------------------------------------------------------------- nodes
+ 
+ def validate_input(state: dict, ctx: Context) -> dict:
+     if len(state["text"]) > 5000:
++        # links after the cut are still checked: a scam link at the end of a long forward must not vanish
++        tail_links = extract_urls(state["text"][5000:])
++        state["user_links"] = list(state["user_links"]) + tail_links
+         state["text"] = state["text"][:5000]
+-        state["limitations"].append("Text was truncated to 5,000 characters.")
++        state["limitations"].append("Text was truncated to 5,000 characters for claim extraction"
++                                    + (f". {len(tail_links)} link(s) after the cut were still checked." if tail_links else "."))
+     for i, (path, name) in enumerate(state["uploads"][:4]):
+         info = validate_upload(Path(path), name, ctx.settings)
+         if info.ok:
+@@ -140,6 +183,10 @@
+                 m["ocr_text"] = res["text"]
+                 claims += [Claim(**{**c.__dict__, "id": f"{m['id']}-{c.id}", "source": f"ocr:{m['id']}"})
+                            for c in extract_claims(res["text"], source=f"ocr:{m['id']}", max_claims=2)]
++            elif res and res["ok"] and res.get("low_confidence"):
++                state["tool_runs"][-1].detail = (f"no confident text (mean confidence {res.get('mean_conf')}, "
++                                                 f"{res.get('confident_words')} confident words), OCR text ignored")
++                state["limitations"].append(f"OCR found no reliable text in {m['name']}, so no claim was read from it.")
+             elif res and not res["ok"]:
+                 state["tool_runs"][-1].status = ToolStatus.NOT_TESTED.value
+                 state["tool_runs"][-1].detail = res["error"]
+@@ -155,7 +202,10 @@
+     links = list(state["user_links"])
+     for c in claims:
+         links += c.urls
+-    state["links"] = list(dict.fromkeys(links))[:10]
++    links = list(dict.fromkeys(links))[:10]
++    for u in list(links):
++        links += embedded_targets(u)       # where an open-redirect style link really sends people
++    state["links"] = list(dict.fromkeys(links))[:12]
+     return state
+ 
+ 
+@@ -211,15 +261,20 @@
+     top = hits[0]
+     doc = top["doc"]
+     text = f"{doc['title']} {doc.get('summary', '')}"
+-    amounts_ok = all("".join(ch for ch in a if ch.isdigit()) in text.replace(",", "") for a in claim.amounts)
+-    links_ok = all(analyse_url(u, ctx.official_domains)["official"] for u in state["links"])
++    # Exact numeric comparison: Rs 200 must not match a release that says Rs 2000.
++    official_numbers = number_values(text)
++    amounts_ok = all(amount_value(a) in official_numbers for a in claim.amounts if amount_value(a) is not None)
++    # Dates too: a release saying 15 December must not confirm a message saying 15 November.
++    dates_ok = date_values(claim.text) <= date_values(text)
++    infos = [analyse_url(u, ctx.official_domains) for u in state["links"]]
++    links_ok = all(i["official"] and "redirects_to_other_site" not in i["flags"] for i in infos)
+     specific = bool(claim.amounts or claim.entities)
+-    if top["query_overlap"] >= 0.7 and amounts_ok and links_ok and specific:
++    if top["query_overlap"] >= 0.7 and amounts_ok and dates_ok and links_ok and specific:
+         state["evidence"].add(
+             tool="pib_release_index", source_name="Press Information Bureau release", source_url=doc["link"],
+             target=claim.id, kind="official_record", stance="supports", strength="strong",
+             established=f"An official PIB release matches the claim ({int(top['query_overlap'] * 100)}% of claim terms, "
+-                        f"amounts consistent, links official): '{doc['title'][:140]}'.",
++                        f"amounts and dates consistent, links official): '{doc['title'][:140]}'.",
+             independence_key=f"official:{doc['link']}", external=False,
+             data={"overlap": top["query_overlap"], "bm25": top["bm25"], "published": doc.get("published")})
+     elif top["query_overlap"] >= 0.5:
+@@ -229,46 +284,73 @@
+             established=f"A related official release exists: '{doc['title'][:140]}'. It does not confirm this message.",
+             independence_key=f"official:{doc['link']}", external=False,
+             limitations=["Topic overlap is not confirmation. Amounts, links or details differ or are missing."],
+-            data={"overlap": top["query_overlap"], "amounts_consistent": amounts_ok, "links_official": links_ok})
++            data={"overlap": top["query_overlap"], "amounts_consistent": amounts_ok, "dates_consistent": dates_ok,
++                  "links_official": links_ok})
+     return state
+ 
+ 
+ def investigate_links(state: dict, ctx: Context) -> dict:
+     claim: Claim | None = state["primary"]
+     gov_claim = bool(claim and claim.entities)
+-    cta = bool(claim and claim.calls_to_action)
++    link_ctas = sorted(set(claim.calls_to_action) & LINK_CTAS) if claim else []
+     public_links = []
+     for url in state["links"]:
+         info = _run(state, "url_analysis", url, analyse_url, url, ctx.official_domains, local=True)
+         if not info:
+             continue
+-        if info["official"]:
++        flags = set(info["flags"])
++        if info["official"] and "redirects_to_other_site" in flags:
++            targets = ", ".join(domain_info(t)["registered"] for t in info["embedded_targets"][:2])
++            state["limitations"].append(f"{url} is on an official domain but carries a link onward to {targets}.")
++            if gov_claim:
++                state["evidence"].add(
++                    tool="url_analysis", source_name="Official domain rule", source_url=None, target=url,
++                    kind="link_risk", stance="contradicts", strength="moderate", external=False,
++                    established=f"The link starts on {info['registered']} but carries a redirect to {targets}, "
++                                f"which is a different site.",
++                    independence_key=URL_RULES_KEY, data={"flags": info["flags"], "targets": info["embedded_targets"]},
++                    limitations=["Official sites rarely link onward this way, but some do. The target is checked "
++                                 "as its own link."])
++        elif info["official"]:
+             state["evidence"].add(
+                 tool="url_analysis", source_name="Official domain rule", source_url=None, target=url,
+                 kind="link_risk", stance="supports", strength="weak", external=False,
+                 established=f"{info['registered']} is an official government domain "
+                             f"({'gov.in/nic.in' if info['official_suffix'] else 'operator allowlist'}).",
+                 independence_key=f"domain:{info['registered']}")
+-        elif gov_claim and IMPERSONATION_FLAGS & set(info["flags"]):
++        elif gov_claim and IMPERSONATION_FLAGS & flags:
+             state["evidence"].add(
+                 tool="url_analysis", source_name="Official domain rule", source_url=None, target=url,
+                 kind="link_risk", stance="contradicts", strength="strong", external=False,
+                 established=f"The message invokes {', '.join(claim.entities[:3])} but links to {info['registered']}, "
+-                            f"which is not an official domain and imitates one ({', '.join(info['flags'])}).",
+-                independence_key=f"lexical:{info['registered']}",
++                            f"which is not an official domain and imitates one "
++                            f"({', '.join(sorted(IMPERSONATION_FLAGS & flags))}).",
++                independence_key=URL_RULES_KEY,
+                 data={"flags": info["flags"], "closest_official": info["closest_official"]})
+-        elif gov_claim and cta:
++        elif gov_claim and WEAK_IMPERSONATION_FLAGS & flags:
+             state["evidence"].add(
+                 tool="url_analysis", source_name="Official domain rule", source_url=None, target=url,
+                 kind="link_risk", stance="contradicts", strength="moderate", external=False,
+-                established=f"The message asks readers to act ({', '.join(claim.calls_to_action[:2])}) through "
++                established=f"The message invokes {', '.join(claim.entities[:3])} and links to {info['registered']}, "
++                            f"which is not an official government domain "
++                            f"({', '.join(sorted(WEAK_IMPERSONATION_FLAGS & flags))}).",
++                independence_key=URL_RULES_KEY, data={"flags": info["flags"]},
++                limitations=["Some genuine sites use 'gov' in a non-gov.in name. This alone is not proof."])
++        elif gov_claim and link_ctas and "foreign_government_domain" not in flags:
++            state["evidence"].add(
++                tool="url_analysis", source_name="Official domain rule", source_url=None, target=url,
++                kind="link_risk", stance="contradicts", strength="weak", external=False,
++                established=f"The message asks readers to act ({', '.join(link_ctas[:2])}) through "
+                             f"{info['registered']}, which is not an official government domain.",
+-                independence_key=f"lexical:{info['registered']}", data={"flags": info["flags"]})
++                independence_key=URL_RULES_KEY, data={"flags": info["flags"]})
++        if not info["valid_host"]:
++            state["limitations"].append(f"Link {url} has an invalid host name and was not sent to any service.")
++            continue
+         check = validate_url(url)
+         if not check.ok:
+             state["limitations"].append(f"Link {url} was not sent to any service: {check.reason}.")
+             continue
+-        public_links.append((url, info))
++        public_links.append((info["url"], info))     # browser-normalised form is what services see
+         if not info["official"]:
+             r = _run(state, "rdap", info["registered"], rdap.lookup, ctx.client, info["registered"])
+             if r and r.get("status") == "found" and r.get("age_days") is not None and r["age_days"] < 90:
+@@ -328,8 +410,10 @@
+                 data={k: m.get(k) for k in ("phash_dist", "dhash_dist", "crop_scale", "orb")})
+     if not remote_ok:
+         return out
+-    clean = sanitized_image_copy(path, ctx.work_dir / state["id"])
+-    if ctx.budget is None or ctx.budget.take("cloud_vision_web"):
++    clean = _run(state, "sanitize_copy", media_id, sanitized_image_copy, path, ctx.work_dir / state["id"], local=True)
++    if clean is None:
++        return out
++    if _budget_ok(state, ctx, "cloud_vision_web", media_id, remote.vision_configured(ctx.settings)):
+         web = _run(state, "cloud_vision_web", media_id, remote.web_detection, ctx.client, clean)
+         if web:
+             fc_pages = [p for p in web["pages"] if any(f in (p["url"] or "") for f in ctx.factcheckers)]
+@@ -347,7 +431,7 @@
+                     independence_key="web_pages", data={"pages": web["pages"][:5]},
+                     limitations=["Web Detection shows where an image appears, not when. Dates need human review."])
+             out["web_pages"] = len(web["pages"])
+-    if ctx.budget is None or ctx.budget.take("sightengine_genai"):
++    if _budget_ok(state, ctx, "sightengine_genai", media_id, remote.sightengine_configured(ctx.settings)):
+         se = _run(state, "sightengine_genai", media_id, remote.sightengine_genai, ctx.client, clean)
+         if se and se["score"] is not None:
+             calibrated = ctx.settings.ai_image_detector_calibrated
+@@ -356,10 +440,16 @@
+                 tool="sightengine_genai", source_name="Sightengine AI-image detector", source_url=None, target=media_id,
+                 kind="synthetic_signal", stance="contradicts" if (high and calibrated) else "neutral",
+                 strength="weak" if (high and calibrated) else "none",
+-                established=f"AI-generation score {se['score']:.2f} (detector {'calibrated' if calibrated else 'NOT calibrated'}).",
+-                independence_key="ai_detector", data=se,
++                # An uncalibrated score is not a probability. It is kept for calibration work only and
++                # is never shown as a number a reader could take as "x% AI".
++                established=(f"AI-generation score {se['score']:.2f} from a detector calibrated on our test set."
++                             if calibrated else "An AI-image detector was run. Its score is not shown because the "
++                             "detector has not passed calibration on forwarded images."),
++                independence_key="ai_detector",
++                data={**se, "calibrated": calibrated} if calibrated else
++                     {"calibrated": False, "raw_score_for_calibration_only": se["score"]},
+                 limitations=["Detector scores are unreliable on compressed or unseen-generator images."])
+-            out["synthetic_signal"] = round(se["score"], 3)
++            out["synthetic_signal"] = round(se["score"], 3) if calibrated else "NOT_CALIBRATED"
+     return out
+ 
+ 
+@@ -371,7 +461,18 @@
+         if kind in ("image", "video"):
+             cred = _run(state, "c2pa", mid, c2pa_inspect.inspect, path, local=True) or {"status": "error"}
+             assess["credentials"] = cred["status"]
+-            if cred.get("status") == "present":
++            if cred.get("status") == "present" and cred.get("validation_state") == "Invalid":
++                assess["manipulation"] = "CREDENTIALS_INVALID"
++                state["evidence"].add(
++                    tool="c2pa", source_name="C2PA Content Credentials", source_url=None, target=mid,
++                    kind="credentials", stance="contradicts", strength="moderate", external=False,
++                    established=(f"Content Credentials signed by {cred.get('issuer')} fail validation "
++                                 f"({', '.join(c for c in cred.get('validation_codes', []) if c) or 'Invalid'}): "
++                                 f"the file was changed after it was signed."),
++                    independence_key="c2pa", data=cred,
++                    limitations=["Invalid credentials show the bytes changed after signing. They do not show "
++                                 "what changed or whether the change is misleading."])
++            elif cred.get("status") == "present":
+                 state["evidence"].add(
+                     tool="c2pa", source_name="C2PA Content Credentials", source_url=None, target=mid,
+                     kind="credentials", stance="contradicts" if cred.get("ai_declared") else "neutral",
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/pipeline/report.py satyapan-feasibility/satyapan/pipeline/report.py
+--- /home/claude/satyapan-feasibility/satyapan/pipeline/report.py	2026-10-30 20:24:02.354625868 +0000
++++ satyapan-feasibility/satyapan/pipeline/report.py	2026-10-30 21:51:37.651201108 +0000
+@@ -16,10 +16,14 @@
+ )
+ 
+ 
++STRENGTH_ORDER = {"strong": 0, "moderate": 1, "weak": 2, "none": 3}
++
++
+ def template_statements(evidence: list[Evidence], basis: list[str]) -> list[Statement]:
++    """One statement per evidence item in the verdict basis, strongest first."""
+     by_id = {e.id: e for e in evidence}
+     out = []
+-    for eid in basis:
++    for eid in sorted(basis, key=lambda i: (STRENGTH_ORDER.get(by_id[i].strength, 9), int(i[1:]) if i[1:].isdigit() else 0)):
+         e = by_id[eid]
+         src = f" ({e.source_url})" if e.source_url else ""
+         out.append(Statement(text=f"{e.source_name}: {e.established}{src}", evidence_ids=[eid]))
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/security/ratelimit.py satyapan-feasibility/satyapan/security/ratelimit.py
+--- /home/claude/satyapan-feasibility/satyapan/security/ratelimit.py	2026-10-30 20:18:46.718607106 +0000
++++ satyapan-feasibility/satyapan/security/ratelimit.py	2026-10-30 21:49:41.110563944 +0000
+@@ -2,11 +2,27 @@
+ from __future__ import annotations
+ 
+ import json
++import os
+ import threading
+ import time
+ from datetime import date
+ from pathlib import Path
+ 
++try:
++    import fcntl          # macOS and Linux: also serialise across uvicorn worker processes
++except ImportError:       # pragma: no cover  (Windows)
++    fcntl = None
++
++_FILE_LOCKS: dict[str, threading.Lock] = {}
++_FILE_LOCKS_GUARD = threading.Lock()
++
++
++def _lock_for(path: Path) -> threading.Lock:
++    """One lock per budget file for the whole process (each request builds its own DailyBudget)."""
++    key = str(path.resolve())
++    with _FILE_LOCKS_GUARD:
++        return _FILE_LOCKS.setdefault(key, threading.Lock())
++
+ # Operator-chosen daily caps, set below each provider's free limit.
+ DEFAULT_DAILY_BUDGET = {
+     "sightengine_genai": 80,       # free plan: 2,000 operations/month, max 500/day, ~5 ops per call
+@@ -39,23 +55,37 @@
+     def __init__(self, path: Path, limits: dict[str, int] | None = None) -> None:
+         self.path = path
+         self.limits = limits or DEFAULT_DAILY_BUDGET
+-        self._lock = threading.Lock()
++        self._lock = _lock_for(path)
+ 
+     def _load(self) -> dict:
+-        if self.path.exists():
++        today = {"day": date.today().isoformat(), "used": {}}
++        if not self.path.exists():
++            return today
++        try:
+             data = json.loads(self.path.read_text())
+-            if data.get("day") == date.today().isoformat():
+-                return data
+-        return {"day": date.today().isoformat(), "used": {}}
++        except (ValueError, OSError):
++            # Corrupt file (for example written by an old version): keep it for inspection, start a
++            # new count. Spending is capped again from here on.
++            self.path.replace(self.path.with_suffix(".corrupt.json"))
++            return today
++        return data if data.get("day") == today["day"] and isinstance(data.get("used"), dict) else today
++
++    def _save(self, data: dict) -> None:
++        tmp = self.path.with_suffix(f".{os.getpid()}.{threading.get_ident()}.tmp")
++        tmp.write_text(json.dumps(data))
++        os.replace(tmp, self.path)          # atomic: readers never see a half-written file
+ 
+     def take(self, tool: str, amount: int = 1) -> bool:
+         if tool not in self.limits:
+             return True
+-        with self._lock:
++        self.path.parent.mkdir(parents=True, exist_ok=True)
++        with self._lock, open(self.path.with_suffix(".lock"), "a") as lock_fh:
++            if fcntl:
++                fcntl.flock(lock_fh, fcntl.LOCK_EX)
+             data = self._load()
+             used = data["used"].get(tool, 0)
+             if used + amount > self.limits[tool]:
+                 return False
+             data["used"][tool] = used + amount
+-            self.path.write_text(json.dumps(data))
++            self._save(data)
+             return True
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/security/ssrf.py satyapan-feasibility/satyapan/security/ssrf.py
+--- /home/claude/satyapan-feasibility/satyapan/security/ssrf.py	2026-10-30 20:18:24.170605765 +0000
++++ satyapan-feasibility/satyapan/security/ssrf.py	2026-10-30 22:24:19.052118751 +0000
+@@ -13,7 +13,9 @@
+ 
+ import ipaddress
+ import os
++import re
+ import socket
++import unicodedata
+ from dataclasses import dataclass, field
+ from typing import Callable
+ from urllib.parse import urljoin, urlsplit
+@@ -26,9 +28,45 @@
+ EXTRA_BLOCKED_NETS = [ipaddress.ip_network(n) for n in
+                       ("100.64.0.0/10", "192.0.0.0/24", "198.18.0.0/15", "0.0.0.0/8")]
+ 
++LDH_LABEL = re.compile(r"^(?!-)[a-z0-9-]{1,63}(?<!-)$")
++
+ Resolver = Callable[[str], list[str]]
+ 
+ 
++def normalise_url(url: str) -> str:
++    """Parse links the way a browser does.
++
++    Browsers (WHATWG URL standard) treat a backslash like a slash in http(s) URLs.
++    Python's urlsplit does not, so "http://x.com\\@pib.gov.in/" looks like pib.gov.in
++    to Python but opens x.com in a browser. Normalising first removes that gap.
++    """
++    url = url.strip()
++    if url.lower().startswith(("http://", "https://")) or "://" not in url:
++        url = url.replace("\\", "/")
++    # Browsers also apply IDNA mapping (UTS 46): invisible format characters such as U+200B are
++    # dropped and full-width letters and dots become ASCII. Without this, "pmki<ZWSP>san.gov.in.x.top"
++    # or "uidai．gov．in．x．top" hid an official name from every check (independent tester, K19).
++    url = "".join(ch for ch in url if unicodedata.category(ch) != "Cf")
++    return unicodedata.normalize("NFKC", url).replace("\u3002", ".")
++
++
++def valid_hostname(host: str) -> bool:
++    """Strict DNS hostname check (letters, digits, hyphens per label, after IDNA encoding)."""
++    host = host.rstrip(".").lower()
++    if not host or len(host) > 253:
++        return False
++    # letters, marks and digits of any script, plus "-" and ".". Punctuation such as the
++    # Devanagari danda (।) can never be part of a host name.
++    if any(ch not in "-." and unicodedata.category(ch)[0] not in "LMN" for ch in host):
++        return False
++    try:
++        ascii_host = host.encode("idna").decode("ascii")
++    except UnicodeError:
++        return False
++    labels = ascii_host.split(".")
++    return len(labels) >= 2 and all(LDH_LABEL.match(label) for label in labels)
++
++
+ def system_resolver(host: str) -> list[str]:
+     infos = socket.getaddrinfo(host, None, proto=socket.IPPROTO_TCP)
+     return sorted({info[4][0] for info in infos})
+@@ -68,7 +106,7 @@
+ 
+ def validate_url(url: str, resolve: bool = False, resolver: Resolver = system_resolver) -> UrlCheck:
+     try:
+-        parts = urlsplit(url.strip())
++        parts = urlsplit(normalise_url(url))
+         port = parts.port
+     except ValueError as exc:
+         return UrlCheck(False, f"unparseable URL: {exc}", url)
+@@ -88,6 +126,8 @@
+         if not is_public(ip):
+             return UrlCheck(False, f"address {ip} is not public", url, host, [str(ip)])
+         return UrlCheck(True, "public IP literal", url, host, [str(ip)])
++    if not valid_hostname(host):
++        return UrlCheck(False, "host has characters that are not allowed in DNS names", url, host)
+     if not resolve:
+         return UrlCheck(True, "syntax ok (not resolved)", url, host)
+     try:
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/security/uploads.py satyapan-feasibility/satyapan/security/uploads.py
+--- /home/claude/satyapan-feasibility/satyapan/security/uploads.py	2026-10-30 20:18:40.522606737 +0000
++++ satyapan-feasibility/satyapan/security/uploads.py	2026-10-30 21:50:33.412714934 +0000
+@@ -18,6 +18,7 @@
+ 
+ MP4_BRANDS_VIDEO = {b"isom", b"iso2", b"mp41", b"mp42", b"avc1", b"qt  ", b"3gp4", b"3gp5", b"dash", b"M4V "}
+ MP4_BRANDS_AUDIO = {b"M4A ", b"M4B "}
++DURATION_TOLERANCE_S = 0.5
+ 
+ 
+ def sniff(head: bytes) -> tuple[str, str] | None:
+@@ -89,9 +90,16 @@
+         info.warnings.append(f"extension .{ext} does not match content {info.mime}, content wins")
+ 
+     if info.kind == "image":
++        # Pillow only RAISES above 2x MAX_IMAGE_PIXELS (it warns in between), so the limit is
++        # also checked explicitly from the header, before any pixel is decoded.
+         Image.MAX_IMAGE_PIXELS = s.max_image_pixels
+         try:
+             with Image.open(path) as im:
++                if im.size[0] * im.size[1] > s.max_image_pixels:
++                    info.width, info.height = im.size
++                    info.errors.append(f"image exceeds the pixel limit ({im.size[0]}x{im.size[1]} > "
++                                       f"{s.max_image_pixels:,} pixels)")
++                    return info
+                 im.verify()
+             with Image.open(path) as im:
+                 info.width, info.height = im.size
+@@ -119,7 +127,7 @@
+         if info.kind == "audio" and not any(st.get("codec_type") == "audio" for st in streams):
+             info.errors.append("no audio stream")
+             return info
+-        if info.duration_s > s.max_media_seconds:
++        if info.duration_s > s.max_media_seconds + DURATION_TOLERANCE_S:     # containers round durations
+             info.errors.append(f"longer than {s.max_media_seconds} s")
+             return info
+ 
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/sources/official.py satyapan-feasibility/satyapan/sources/official.py
+--- /home/claude/satyapan-feasibility/satyapan/sources/official.py	2026-10-30 20:20:41.706613941 +0000
++++ satyapan-feasibility/satyapan/sources/official.py	2026-10-30 21:47:00.767063687 +0000
+@@ -13,6 +13,7 @@
+ 
+ from satyapan.errors import ToolError, ToolStatus
+ from satyapan.http import ApiClient, json_or_error
++from satyapan.security.ssrf import normalise_url, valid_hostname
+ 
+ OFFICIAL_SUFFIXES = {"gov.in", "nic.in"}
+ EXTRACT = tldextract.TLDExtract(suffix_list_urls=())   # bundled public-suffix list, no network
+@@ -25,12 +26,26 @@
+ 
+ 
+ def domain_info(url_or_host: str) -> dict:
+-    raw = url_or_host.strip()
+-    host = (urlsplit(raw if "://" in raw else f"http://{raw}").hostname or raw).lower().rstrip(".")
+-    ext = EXTRACT(host)
+-    registered = f"{ext.domain}.{ext.suffix}" if ext.domain and ext.suffix else host
+-    return {"host": host, "registered": registered, "suffix": ext.suffix,
+-            "subdomain": ext.subdomain, "official_suffix": ext.suffix in OFFICIAL_SUFFIXES}
++    """Host facts for a link, parsed the way a browser parses it.
++
++    valid_host is False for anything that is not a DNS hostname (percent signs, slashes,
++    spaces). Such hosts are never official and are never sent to RDAP or other services.
++    """
++    raw = normalise_url(url_or_host)
++    try:
++        parts = urlsplit(raw if "://" in raw else f"http://{raw}")
++        host = (parts.hostname or "").lower().rstrip(".")
++        userinfo = parts.username or ""
++    except ValueError:
++        host, userinfo = "", ""
++    valid = valid_hostname(host)
++    ext = EXTRACT(host) if host else None
++    if valid and ext and ext.domain and ext.suffix:
++        registered, suffix, subdomain = f"{ext.domain}.{ext.suffix}", ext.suffix, ext.subdomain
++    else:
++        registered, suffix, subdomain = host, (ext.suffix if ext else ""), (ext.subdomain if ext else "")
++    return {"host": host, "registered": registered, "suffix": suffix, "subdomain": subdomain,
++            "official_suffix": valid and suffix in OFFICIAL_SUFFIXES, "valid_host": valid, "userinfo": userinfo}
+ 
+ 
+ def load_allowlist(path: Path) -> set[str]:
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/satyapan/storage.py satyapan-feasibility/satyapan/storage.py
+--- /home/claude/satyapan-feasibility/satyapan/storage.py	2026-10-30 20:27:07.366636866 +0000
++++ satyapan-feasibility/satyapan/storage.py	2026-10-30 21:50:45.943401473 +0000
+@@ -2,7 +2,8 @@
+ 
+ MongoDB Atlas is the planned store for the hosted prototype. For the spike a
+ JSON file per investigation is simpler, inspectable and has no setup cost.
+-Uploads are kept only for the retention window (SATYAPAN_RETENTION_HOURS).
++Uploads and working files are deleted when an investigation finishes. Investigation
++records (they contain the user's text) are deleted after SATYAPAN_RETENTION_HOURS.
+ """
+ from __future__ import annotations
+ 
+@@ -27,7 +28,9 @@
+ 
+     def save(self, investigation_id: str, payload: dict) -> None:
+         path = self.root / "investigations" / f"{investigation_id}.json"
+-        path.write_text(json.dumps(payload, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
++        tmp = path.with_suffix(".tmp")
++        tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
++        tmp.replace(path)       # a poller never reads a half-written record
+ 
+     def load(self, investigation_id: str) -> dict | None:
+         if not investigation_id.isalnum():
+@@ -35,16 +38,29 @@
+         path = self.root / "investigations" / f"{investigation_id}.json"
+         return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+ 
++    def discard_files(self, investigation_id: str) -> None:
++        """Delete an investigation's uploads and working files once it has finished."""
++        for base in (self.root / "uploads", self.root / "work"):
++            shutil.rmtree(base / investigation_id, ignore_errors=True)
++
+     def sweep(self, retention_hours: int | None = None) -> int:
+-        """Delete uploads and working files older than the retention window."""
++        """Delete uploads, working files AND investigation records older than the retention window.
++
++        Investigation records contain the user's text, so they expire too. The API runs
++        this at start-up and at most every 10 minutes while handling requests.
++        """
+         hours = retention_hours if retention_hours is not None else get_settings().retention_hours
+         cutoff = time.time() - hours * 3600
+         removed = 0
+-        for base in (self.root / "uploads", self.root / "work"):
++        for base in (self.root / "uploads", self.root / "work", self.root / "investigations"):
+             if not base.exists():
+                 continue
+             for d in base.iterdir():
+-                if d.stat().st_mtime < cutoff:
++                try:
++                    old = d.stat().st_mtime < cutoff
++                except FileNotFoundError:
++                    continue
++                if old:
+                     shutil.rmtree(d, ignore_errors=True) if d.is_dir() else d.unlink(missing_ok=True)
+                     removed += 1
+         return removed
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/scripts/build_known_index.py satyapan-feasibility/scripts/build_known_index.py
+--- /home/claude/satyapan-feasibility/scripts/build_known_index.py	2026-10-30 20:39:31.978681128 +0000
++++ satyapan-feasibility/scripts/build_known_index.py	2026-10-30 21:51:32.377252130 +0000
+@@ -46,6 +46,7 @@
+     (d / "known_claims.jsonl").write_text("".join(json.dumps(c, ensure_ascii=False) + "\n" for c in claims),
+                                           encoding="utf-8")
+     images.save(d / "image_index")
++    audio.save(d / "audio_index")        # before the audit fix the audio index was built and then lost
+     print(f"{len(claims)} known claims, {len(images.items)} images, {len(audio.meta)} audio clips indexed")
+ 
+ 
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/scripts/fetch_heldout_images.py satyapan-feasibility/scripts/fetch_heldout_images.py
+--- /home/claude/satyapan-feasibility/scripts/fetch_heldout_images.py	1970-01-01 00:00:00.000000000 +0000
++++ satyapan-feasibility/scripts/fetch_heldout_images.py	2026-10-30 22:09:52.772763105 +0000
+@@ -0,0 +1,95 @@
++"""Download the held-out image set used by audit/image_eval.py (OpenCV sample images).
++
++Source: https://github.com/opencv/opencv/tree/4.10.0/samples/data (Apache-2.0, see the
++OpenCV LICENSE). Pinned to tag 4.10.0 and checked against SHA-256 hashes, so every run
++evaluates the same bytes. These images are NEVER used to tune thresholds.
++Usage: python scripts/fetch_heldout_images.py [--out data/heldout]
++"""
++from __future__ import annotations
++
++import argparse
++import hashlib
++import sys
++from pathlib import Path
++
++import httpx
++
++BASE = "https://raw.githubusercontent.com/opencv/opencv/4.10.0/samples/data/"
++LICENSE = "https://raw.githubusercontent.com/opencv/opencv/4.10.0/LICENSE"
++SHA256 = {
++    "Blender_Suzanne1.jpg": "bc3330e78e3456688e22b62fe033b8b2444fd016df567b1782bcc9baaead8e02",
++    "Blender_Suzanne2.jpg": "6c0777ab795b888703857312916bd6275e04a79e55f84f00c5b8cfdb60cbaf40",
++    "HappyFish.jpg": "ade5b67347d7f89b1539c93843f3f7178782a7e34eb1fe586f4a785c3e60a432",
++    "WindowsLogo.jpg": "b16d7d76bb2287ff8ba8f3fa37a448f9a3b3ec4725fdcd681b44f0f9139855c1",
++    "aero1.jpg": "d9a69191f6e3642ea361bc3c62e677b2f40fe6534b78da540f4155e0734b59ef",
++    "aero3.jpg": "1c407146f8762b3b14a7953ff9bc4c01ed64c467d7277122e769bf7e816017a4",
++    "apple.jpg": "e86879de3d9a807dedc742a8f464f39e6b74bbb531a1fba3583155d94997d1cd",
++    "baboon.jpg": "1a1dd18d78eec44420af3b0b7f08ee3d41c982916cae3ce203d7ff35d754cc0f",
++    "basketball1.png": "ba06f6701f7260998b430c39b6557f775497e6ce7b1a74f0b7ea6af371bf54a6",
++    "basketball2.png": "b3047772e0dc6c9d83c26f64894ca1a897f799f855c5574ac24b2ef934c2978e",
++    "board.jpg": "4c9a24ba67138ad5486d550f586cc5dd1161be112f1c1bea336d6c550cdf255f",
++    "box.png": "1094629c1e2ebbc8a9ae2c9c63e18c1dff0f5f1481146e02f3b11a3d30feb20a",
++    "box_in_scene.png": "8b0225ff76244a42bd1400c0904f8b7afea7d97b7d8115495e42e98ad347bd51",
++    "building.jpg": "742a1baad62ac82e91e718e77eedf7e85c2eddc4badfb8c87c6cbc86c45a8b07",
++    "butterfly.jpg": "34a99716b78ded10eae87b4880de739d3e68cc7dd1a96812bb28f469d5eeaea8",
++    "cards.png": "acf2d347e8de7fbb0edbf457c8fb467cb6d16d4166c92f40e68f3831e06149ac",
++    "detect_blob.png": "f31a972c7aa0fbf5c0559a9c76cb0ef88a56567362d05194aa0e7f2592b4cff0",
++    "digits.png": "60c917758ef97cc090f35cd8e293e4de691ef942847da0ff80dedab33d57c662",
++    "ellipses.jpg": "775f8bd606ba5184907a0851474dc39893e11a296e0af233e8b00f7afbde1866",
++    "fruits.jpg": "9c031d80a1c52da5eca790db896baffec6a7e52bf786cdb7bbfca5c7f880e6a1",
++    "gradient.png": "ac8c3921949a2b36cd9b9060800ca344f27e4493f76e2a96b109601c94b42cd3",
++    "graf1.png": "1504b769303c7bde00fa578eeaad3c68e02aceabeb1242e556f1f8d19e4bdea5",
++    "graf3.png": "492e0e96f21748d093e1a29f4dbfd46528bd75966937e85ce7c8abc0f361fc15",
++    "home.jpg": "23b8cf46a1965d0ec33459b875aed43187802834db49e0daa9fa2cc842e9d8d2",
++    "left01.jpg": "9621899098adffa1440c8264606bb7be535ccfd9ad126ae8e0bd9b0c5a5b8676",
++    "left02.jpg": "052e700bbcc865c112958ec2ea105cb1bce4deca50ac8d6efae13adca9df7a2c",
++    "left03.jpg": "c85b9426c3d8fcf161e1e727356105091009c3fd0b1b1a65bc2da91fea2724d2",
++    "left04.jpg": "b490599dccfbfe5eb56d33363415b02227a9548ab8c9b8e7b05d3580e97266d9",
++    "left05.jpg": "40bab8934fa76f82ec614a7fd0e6ebb4d9f74391d5e8b0c6f2f0ed6080c6c4de",
++    "left06.jpg": "1cb164db61b3bd52f58a7e9340bb27c5e0278895bc80b6f292fba5cf9bccc4a1",
++    "left07.jpg": "d2211fe9f971646b6ff88ed93a4f0d3f443741eb2894095cba15caade7c8c6e4",
++    "lena.jpg": "7de7ed51a1594fff247f4cae2301eceacf5313d6011e37b4a4c8733f7bb72c07",
++    "lena_tmpl.jpg": "b7f96269c46069446764b16385e1ad9cca7c5fb5f79a6e2749c2ddcb7e344883",
++    "licenseplate_motion.jpg": "ea6fa9cea75df91bec656d1d3b903111a9c0708c6a3b88f405a5156de38ff9d6",
++    "mask.png": "d367226b00919d9487a59b0173592b7ee631337728fdd01f1b76beeab9b3f97a",
++    "messi5.jpg": "1d570e49654e84c7a943918537bd9e5e1ef82920152e147c834006e235be97c9",
++    "notes.png": "b40d7e1f92df046f4853b006a0dd745bd3e55e48e57faa28c686a519fd062633",
++    "orange.jpg": "152c20d2f380ac985de25e474e1a5f06ed34b932191342099b8272a63a15a079",
++    "pic1.png": "0244e20a34fa2d30c60e60928d6d71f89d32e0e0266b4644980798cc2368765a",
++    "pic2.png": "8c32d76f17c2eca78a1402fd1bb48144785e5397ff5a24de68c36b0f76b1f055",
++    "pic3.png": "1e2fe4632c0d5350d48525cc88a01a0764d9043d51a4110309b999eb79297db0",
++    "pic4.png": "0d43824171301d7fe8e14733e8f799dfd26fe66bdb9098783c58a47733a3f002",
++    "pic5.png": "fa1f0dcc715867c5c8684f53d29ed2bfa013f8669aa1f73864fb7d315638a02b",
++    "pic6.png": "436808a38b064f1f2ca8790d8787382f887c2135c4bc6b3cfc84a3bd7b228d6e",
++    "rubberwhale1.png": "eb312435369dac9efcc92f7e098edbd9ed8d7e6dfede8b3b4d8e3702cd80b796",
++    "rubberwhale2.png": "ee309a00d47b837b322ea5d9128775e0c46869b8014376286ba316a073d293ac",
++    "smarties.png": "ad3f751c053fdcf432687c1bc0e56a61a9119d2bb2ae29365f8aa6534fc77417",
++    "starry_night.jpg": "accda7a19a90f22a4a922fdc8c230167d7abf5f80882171e2cee125c5f12481d",
++    "stuff.jpg": "21cd00afbdd0727f445dd91c0a09633e6345ed5b05a3d2355453a1f3c314c6c5",
++    "sudoku.png": "3cd9ab173f7178c0a16bba9f867062b58b5d60918d5aeb8ced85cba0b24c353a",
++    "templ.png": "8b339c9ac686f3a85952fe895e9b0b0225b8ca0c9fd204dc11dce8e555152279"
++}
++
++
++def main() -> int:
++    ap = argparse.ArgumentParser()
++    ap.add_argument("--out", default=str(Path(__file__).resolve().parent.parent / "data" / "heldout"))
++    out = Path(ap.parse_args().out)
++    out.mkdir(parents=True, exist_ok=True)
++    bad = []
++    with httpx.Client(timeout=30, follow_redirects=True) as client:
++        (out / "LICENSE_opencv.txt").write_bytes(client.get(LICENSE).content)
++        for name, digest in SHA256.items():
++            path = out / name
++            if not (path.exists() and hashlib.sha256(path.read_bytes()).hexdigest() == digest):
++                path.write_bytes(client.get(BASE + name).raise_for_status().content)
++            if hashlib.sha256(path.read_bytes()).hexdigest() != digest:
++                bad.append(name)
++    print(f"{len(SHA256) - len(bad)}/{len(SHA256)} files verified in {out}")
++    if bad:
++        print("HASH MISMATCH:", bad)
++    return 1 if bad else 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/scripts/run_integration_tests.sh satyapan-feasibility/scripts/run_integration_tests.sh
+--- /home/claude/satyapan-feasibility/scripts/run_integration_tests.sh	1970-01-01 00:00:00.000000000 +0000
++++ satyapan-feasibility/scripts/run_integration_tests.sh	2026-10-30 22:10:44.903148342 +0000
+@@ -0,0 +1,33 @@
++#!/usr/bin/env bash
++# Satyapan: LIVE integration tests against the real external APIs. Run on your own machine.
++#
++#   bash scripts/run_integration_tests.sh                 keyless and key-based READS only
++#   bash scripts/run_integration_tests.sh --allow-third-party
++#        also SENDS public test data (a public test image, Google's Safe Browsing test URL,
++#        example.com) to urlscan.io, Sightengine, Cloud Vision and the LLM provider.
++#
++# Credentials go in .env (copy .env.example). Names only, never commit the values:
++#   GOOGLE_API_KEY        Fact Check Tools API + Safe Browsing API enabled on the same Cloud project
++#   URLSCAN_API_KEY       free urlscan.io account
++#   SIGHTENGINE_USER / SIGHTENGINE_SECRET   free Sightengine account
++#   GOOGLE_VISION_API_KEY (or VISION_USE_GCLOUD=1 + GOOGLE_CLOUD_PROJECT)  needs billing enabled
++#   LLM_BASE_URL / LLM_API_KEY / LLM_MODEL  any OpenAI-compatible endpoint (optional)
++# Keyless: RDAP (IANA bootstrap), Wikidata SPARQL, PIB RSS.
++# Every result is labelled LIVE_SUCCESS, AUTH_REQUIRED, RATE_LIMITED, BLOCKED, SERVICE_ERROR or
++# NOT_TESTED. Nothing is mocked here. Results: results/audit/integration_<UTC time>/
++set -u
++cd "$(dirname "$0")/.."
++TS=$(date -u +%Y%m%dT%H%M%SZ)
++OUT="results/audit/integration_$TS"
++mkdir -p "$OUT"
++PY=${PYTHON:-python}
++{
++  echo "integration run $TS (UTC) on $(uname -a)"
++  echo "python: $($PY --version 2>&1)"
++  echo "keys configured (names only): $(grep -E '^[A-Z_]+=.+' .env 2>/dev/null | cut -d= -f1 | tr '\n' ' ')"
++} > "$OUT/env.txt"
++$PY -m integration.run_all "$@" --summary SUMMARY.md 2>&1 | tee "$OUT/run.log"
++code=${PIPESTATUS[0]}
++cp integration_results/*.json integration_results/SUMMARY.md "$OUT/" 2>/dev/null
++echo "results copied to $OUT (exit $code)"
++exit "$code"
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/scripts/run_local_tests.sh satyapan-feasibility/scripts/run_local_tests.sh
+--- /home/claude/satyapan-feasibility/scripts/run_local_tests.sh	1970-01-01 00:00:00.000000000 +0000
++++ satyapan-feasibility/scripts/run_local_tests.sh	2026-10-30 22:20:58.046953209 +0000
+@@ -0,0 +1,100 @@
++#!/usr/bin/env bash
++# Satyapan: every LOCAL test in one command. No API keys needed. Nothing is uploaded anywhere.
++#
++#   bash scripts/run_local_tests.sh            full run (about 6 to 10 minutes on a laptop)
++#   bash scripts/run_local_tests.sh --quick    skip the slow index-scaling and performance steps
++#
++# What each step is (none of these is a LIVE API test, see scripts/run_integration_tests.sh):
++#   unit          pytest: unit and component tests. Offline by design. Network calls fail fast
++#                 and are recorded as BLOCKED or AUTH_REQUIRED (test_api tolerates both).
++#   adversarial   attempts to force wrong verdicts, network forced off (mocked transport)
++#   llm           prompt-injected LLM simulated by a LOCAL fake server (mocked LLM)
++#   leakage       secrets echoed back by a LOCAL mock service
++#   e2e           scenarios A to H through the real pipeline. External APIs are called if this
++#                 machine has network and keys, otherwise recorded as BLOCKED or AUTH_REQUIRED
++#   image_eval    reuse matching on dev (tuned) and held-out (never tuned) image sets
++#   security      against a real uvicorn server on 127.0.0.1 (safe payloads, local only)
++#   concurrency   budget race in-process, then 8 simultaneous image jobs on the local server
++#   performance   wall time, CPU and peak memory per input type (this machine only)
++#   scaling       recall and latency as the known-media index grows past 250 items
++#   dataset       manifest validator on the template (reports how many rows are still empty)
++# Logs: results/audit/run_<UTC time>/  (one log per step, env.txt, SUMMARY.txt)
++set -u
++cd "$(dirname "$0")/.."
++QUICK=0; [ "${1:-}" = "--quick" ] && QUICK=1
++TS=$(date -u +%Y%m%dT%H%M%SZ)
++RUN="results/audit/run_$TS"
++mkdir -p "$RUN"
++PY=${PYTHON:-python}
++export SATYAPAN_RETRIES=0
++[ -f tests/media/tessdata/eng.traineddata ] && export TESSDATA_PREFIX="$PWD/tests/media/tessdata"
++CPUS=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo "?")
++
++{
++  echo "run started $TS (UTC)"
++  echo "host: $(uname -a)"
++  echo "cpus: $CPUS"
++  if [ "$(uname)" = "Darwin" ]; then echo "memory: $(( $(sysctl -n hw.memsize) / 1048576 )) MB"; \
++  else echo "memory: $(awk '/MemTotal/ {print int($2/1024)" MB"}' /proc/meminfo)"; fi
++  echo "python: $($PY --version 2>&1)"
++  echo "tesseract: $(tesseract --version 2>&1 | head -1)"
++  echo "tesseract langs: $(tesseract --list-langs 2>/dev/null | tail -n +2 | tr '\n' ' ')"
++  echo "ffmpeg: $(ffmpeg -version 2>&1 | head -1)"
++  echo "keys configured (names only): $(grep -E '^(GOOGLE_API_KEY|URLSCAN_API_KEY|SIGHTENGINE_USER|LLM_BASE_URL)=.+' .env 2>/dev/null | cut -d= -f1 | tr '\n' ' ')"
++  echo "--- pip freeze"; $PY -m pip freeze 2>/dev/null
++} > "$RUN/env.txt"
++
++declare -a NAMES CODES
++step() {   # step <name> <command...>
++  local name=$1; shift
++  echo "=== $name: $*"
++  { echo "### $(date -u +%FT%TZ) $name: $*"; "$@"; } > "$RUN/$name.log" 2>&1
++  local code=$?
++  NAMES+=("$name"); CODES+=("$code")
++  echo "    exit $code, log $RUN/$name.log"
++}
++
++[ -d tests/media/images ] || step fetch_test_media $PY scripts/fetch_test_media.py
++step fetch_heldout $PY scripts/fetch_heldout_images.py --out data/heldout
++
++step unit         $PY -m pytest -o addopts="" -q -rA
++step adversarial  $PY audit/adversarial_verdicts.py --out "$RUN/adversarial_verdicts.json"
++step llm          $PY audit/llm_injection.py
++step leakage      $PY audit/key_leakage.py
++step e2e          $PY audit/e2e_scenarios.py --heldout-dir data/heldout --out "$RUN/e2e_scenarios.json"
++step image_dev    $PY audit/image_eval.py --set dev --dir tests/media/images --out "$RUN/image_eval_dev.json"
++step image_heldout $PY audit/image_eval.py --set heldout --dir data/heldout --out "$RUN/image_eval_heldout.json"
++
++# a real server on a local port with its own empty data folder
++PORT=${SATYAPAN_TEST_PORT:-8799}
++SDATA=$(mktemp -d)
++SATYAPAN_DATA_DIR="$SDATA" $PY -m uvicorn satyapan.api.app:app --host 127.0.0.1 --port "$PORT" > "$RUN/uvicorn.log" 2>&1 &
++SPID=$!
++for _ in $(seq 1 30); do curl -sf "http://127.0.0.1:$PORT/health" >/dev/null && break; sleep 0.5; done
++step security     $PY audit/security_practical.py --server "http://127.0.0.1:$PORT" --data-dir "$SDATA" \
++                  --log "$RUN/uvicorn.log" --out "$RUN/security_practical.json"
++$PY -c "from PIL import Image; Image.open('data/heldout/building.jpg').convert('RGB').resize((4000, 3000)).save('$SDATA/big12mp.jpg', quality=85)"
++sleep 61   # let the per-IP rate limit (10 POSTs/minute) refill after the security step
++step concurrency  $PY audit/concurrency.py --server "http://127.0.0.1:$PORT" --pid "$SPID" \
++                  --image "$SDATA/big12mp.jpg" --n 8 --out "$RUN/concurrency.json"
++kill "$SPID" 2>/dev/null; wait "$SPID" 2>/dev/null
++
++if [ $QUICK -eq 0 ]; then
++  step performance $PY audit/performance.py --heldout-dir data/heldout --out "$RUN/performance.json"
++  step scaling     $PY audit/index_scaling.py --heldout-dir data/heldout --dev-dir tests/media/images \
++                   --out "$RUN/index_scaling.json"
++fi
++step dataset      $PY audit/dataset_audit.py --out "$RUN/dataset_validation.json"
++
++{
++  echo "Satyapan local test run $TS on $(uname -s) with $CPUS CPUs"
++  for i in "${!NAMES[@]}"; do
++    f="$RUN/${NAMES[$i]}.log"
++    p=$(grep -cE '^(PASS|OK)\b' "$f" 2>/dev/null); x=$(grep -cE '^FAIL\b' "$f" 2>/dev/null)
++    printf "%-14s exit %-3s PASS/OK lines %-4s FAIL lines %-4s %s\n" "${NAMES[$i]}" "${CODES[$i]}" "$p" "$x" \
++      "$(grep -E 'passed|failed|scenarios correct|behaved correctly|checks passed|precision|concurrent investigations|files verified|rows, |^audio:' "$f" | tail -1 | cut -c1-110)"
++  done
++  echo "Expected while the dataset is empty: 'dataset' warns that all rows are empty templates."
++  echo "Expected e2e FAIL lines: B2 (paraphrase, lexical limit) and, without network or keys, D4 (Safe Browsing)."
++  echo "e2e therefore exits 1 on this kind of machine. Any OTHER failure is a regression."
++} | tee "$RUN/SUMMARY.txt"
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/templates/official_domains.txt satyapan-feasibility/templates/official_domains.txt
+--- /home/claude/satyapan-feasibility/templates/official_domains.txt	2026-10-30 20:39:54.080375147 +0000
++++ satyapan-feasibility/templates/official_domains.txt	2026-10-30 22:08:57.116187686 +0000
+@@ -10,3 +10,5 @@
+ rbi.org.in
+ irctc.co.in
+ npci.org.in
++# mygov.in: Government of India citizen platform, listed at https://www.digitalindia.gov.in/di_ecosystem/mygov/ (added in the audit round)
++mygov.in
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/tests/test_api.py satyapan-feasibility/tests/test_api.py
+--- /home/claude/satyapan-feasibility/tests/test_api.py	2026-10-30 20:30:43.026649685 +0000
++++ satyapan-feasibility/tests/test_api.py	2026-10-30 21:51:13.168359406 +0000
+@@ -11,7 +11,7 @@
+     start = time.time()
+     while time.time() - start < timeout:
+         data = client.get(f"/v1/investigations/{inv_id}").json()
+-        if data["status"] != "running":
++        if data["status"] not in ("queued", "running"):
+             return data
+         time.sleep(0.2)
+     raise AssertionError("investigation did not finish")
+diff -ruN -x .venv -x data -x results -x __pycache__ -x .pytest_cache -x integration_results -x '*.pyc' -x audit /home/claude/satyapan-feasibility/tests/test_audit_regressions.py satyapan-feasibility/tests/test_audit_regressions.py
+--- /home/claude/satyapan-feasibility/tests/test_audit_regressions.py	1970-01-01 00:00:00.000000000 +0000
++++ satyapan-feasibility/tests/test_audit_regressions.py	2026-10-30 22:25:00.780976119 +0000
+@@ -0,0 +1,431 @@
++"""Regression tests for the bugs found in the end-to-end audit (docs/FINAL_TEST_AUDIT.md, section K).
++
++Each test names the audit finding it guards. All are offline. Fixtures marked FIXTURE are
++test data for matching logic, not evaluation data.
++"""
++from __future__ import annotations
++
++import csv
++import json
++import os
++import subprocess
++import sys
++import threading
++import time
++from pathlib import Path
++
++import pytest
++from PIL import Image
++
++from conftest import MEDIA, ROOT, need
++from satyapan.errors import ToolError, ToolStatus
++from satyapan.links.urlinfo import analyse_url
++from satyapan.models import Evidence, Statement
++from satyapan.pipeline.citations import validate
++from satyapan.pipeline.graph import Context, _run, new_state, run, to_report
++from satyapan.sources.official import domain_info
++from satyapan.sources.pib import PibStore
++
++OFFICIAL = {"pib.gov.in", "pmkisan.gov.in", "uidai.gov.in", "mygov.in"}
++
++
++def ctx_for(client, tmp: Path, **kw) -> Context:
++    from satyapan.config import get_settings
++    return Context(client=client, settings=get_settings(), pib=PibStore(tmp / "pib.jsonl"),
++                   official_domains=OFFICIAL, work_dir=tmp / "work", **kw)
++
++
++# K1: gov-token heuristic accused genuine and foreign government sites -------------------------
++
++def test_k1_foreign_government_and_mygov_are_not_impersonation(offline_client, tmp_dir):
++    a = analyse_url("https://travel.state.gov/content/travel.html", OFFICIAL)
++    assert "foreign_government_domain" in a["flags"] and "gov_token_outside_gov_in" not in a["flags"]
++    assert analyse_url("https://www.mygov.in/quiz", OFFICIAL)["official"]
++    for text in ("US government publishes a travel advisory for India at https://travel.state.gov/content/travel.html",
++                 "Government of India invites citizens to the quiz at https://www.mygov.in/quiz"):
++        assert to_report(run(new_state(text=text), ctx_for(offline_client, tmp_dir))).verdict != "FAKE"
++
++
++def test_k1_specific_impersonation_is_still_strong(offline_client, tmp_dir):
++    for url in ("http://pmkisan-gov.top/apply", "https://uidai.gov.in.verify-kyc.top/x", "https://pmkisam.in/",
++                "https://pib.gov.in@evil-relief.top/claim", "http://x.com\\@pib.gov.in/verify"):
++        st = run(new_state(text=f"PM Kisan Yojana: Rs 6000 for farmers, register at {url}"),
++                 ctx_for(offline_client, tmp_dir))
++        assert to_report(st).verdict == "FAKE", url
++
++
++# K2: "share" was a call to action, and every link counted as a separate source ----------------
++
++def test_k2_news_links_with_share_are_not_fake(offline_client, tmp_dir):
++    text = ("Government announces PM Kisan instalment for farmers. Read and share: "
++            "https://www.thehindu.com/news/a.ece https://indianexpress.com/article/b/")
++    rep = to_report(run(new_state(text=text), ctx_for(offline_client, tmp_dir)))
++    assert rep.verdict != "FAKE"
++
++
++def test_k2_lexical_link_rules_count_once(offline_client, tmp_dir):
++    text = "Government scheme: register now at http://relief-gov.top/a and http://help-gov.xyz/b"
++    st = run(new_state(text=text), ctx_for(offline_client, tmp_dir))
++    lexical = [e for e in st["evidence"].items if e.tool == "url_analysis" and e.stance == "contradicts"]
++    assert len(lexical) == 2 and len({e.independence_key for e in lexical}) == 1
++    assert st["agg"]["contradicts"]["score"] == 2 and to_report(st).verdict == "UNVERIFIED"
++
++
++# K3: amounts matched as substrings (Rs 200 confirmed by a Rs 2000 release) ---------------------
++
++def test_k3_amounts_compared_exactly(offline_client, tmp_dir):
++    from satyapan.claims import amount_value, number_values
++    assert amount_value("Rs 2,000") == 2000 and amount_value("2 lakh") == 200000
++    assert 200 not in number_values("FIXTURE PM Kisan instalment of Rs 2000 released")
++    ctx = ctx_for(offline_client, tmp_dir)
++    ctx.pib.add([{"title": "FIXTURE PM Kisan 21st instalment of Rs 2000 released to farmers",
++                  "link": "https://pib.gov.in/PressReleasePage.aspx?PRID=900001", "summary": ""}])
++    bad = run(new_state(text="PM Kisan 21st instalment of Rs 200 released to farmers. Check pmkisan.gov.in"), ctx)
++    assert to_report(bad).verdict != "GENUINE"
++    good = run(new_state(text="PM Kisan 21st instalment of Rs 2,000 released to farmers. Check pmkisan.gov.in"), ctx)
++    assert to_report(good).verdict == "GENUINE"
++
++
++# K4: an LLM rewrite could contradict the verdict and still pass the citation check -------------
++
++def test_k4_citation_rejects_verdict_contradicting_and_ungrounded_statements():
++    e = Evidence(id="E1", tool="url_analysis", source_name="Official domain rule", source_url=None, target="u",
++                 kind="link_risk", stance="contradicts", strength="strong",
++                 established="The message invokes pib but links to pib-relief.top, which is not an official domain.",
++                 independence_key="url_rules")
++    kept, problems = validate([
++        Statement("This message is genuine and safe to share with everyone", ["E1"]),
++        Statement("Farmers across the nation celebrate the generous festival bonus", ["E1"]),
++        Statement("The link goes to pib-relief.top, which is not an official domain", ["E1"]),
++    ], [e], "FAKE")
++    assert [s.text for s in kept] == ["The link goes to pib-relief.top, which is not an official domain"]
++    assert {p["problem"] for p in problems} == {"wording disagrees with the FAKE verdict",
++                                                "statement is not grounded in the cited evidence"}
++
++
++def test_k4_rating_words_from_the_evidence_are_allowed():
++    e = Evidence(id="E1", tool="factcheck_search", source_name="Factly", source_url="https://factly.in/x",
++                 target="C1", kind="fact_check", stance="contradicts", strength="strong",
++                 established="A fact-check rated a similar claim 'False' (text similarity 92/100).",
++                 independence_key="factcheck:factly.in")
++    kept, _ = validate([Statement("Factly rated a similar claim False", ["E1"])], [e], "FAKE")
++    assert kept
++
++
++# K5: C2PA credentials that failed validation were reported as neutral --------------------------
++
++def test_k5_invalid_content_credentials_are_evidence(offline_client, tmp_dir):
++    src = need(MEDIA / "c2pa" / "C.jpg")
++    data = bytearray(src.read_bytes())
++    sos = data.rfind(b"\xff\xda")
++    for i in range(sos + 400, sos + 420):
++        data[i] ^= 0x5A
++    tampered = tmp_dir / "tampered.jpg"
++    tampered.write_bytes(bytes(data))
++    ctx = ctx_for(offline_client, tmp_dir)
++    st = run(new_state(media=[(tampered, "tampered.jpg")]), ctx)
++    ev = [e for e in st["evidence"].items if e.tool == "c2pa"]
++    assert ev and ev[0].stance == "contradicts" and ev[0].strength == "moderate"
++    assert st["media_assessment"]["M1"]["manipulation"] == "CREDENTIALS_INVALID"
++    st2 = run(new_state(media=[(src, "C.jpg")]), ctx)
++    assert all(e.stance == "neutral" for e in st2["evidence"].items if e.tool == "c2pa")
++
++
++# K6: the audio index was built but never saved, so audio reuse was never detected --------------
++
++def test_k6_audio_index_save_and_load(tmp_dir):
++    from satyapan.media.audio import AudioIndex
++    speech = need(MEDIA / "audio" / "speech_a.ogg")
++    idx = AudioIndex()
++    idx.add("A", speech, source_url="https://factcheck.example/a")
++    idx.save(tmp_dir / "audio_index")
++    loaded = AudioIndex.load(tmp_dir / "audio_index")
++    r1, r2 = idx.query(speech)[0], loaded.query(speech)[0]
++    assert r2["match"] and r1["aligned_hits"] == r2["aligned_hits"] and r2["meta"]["source_url"]
++
++
++# K7: API keys echoed by a service leaked into the stored report --------------------------------
++
++def test_k7_tool_errors_are_redacted(monkeypatch):
++    monkeypatch.setenv("GOOGLE_API_KEY", "SECRETKEY123456")
++    err = ToolError(ToolStatus.SERVICE_ERROR, "bad request for https://x.googleapis.com/v4/a?key=SECRETKEY123456 "
++                                              "echo SECRETKEY123456")
++    assert "SECRETKEY123456" not in err.message and "SECRETKEY123456" not in str(err)
++    state = new_state()
++
++    def boom():
++        raise RuntimeError("upstream said SECRETKEY123456")
++    _run(state, "x", "-", boom)
++    assert "SECRETKEY123456" not in state["tool_runs"][0].detail
++
++
++# K8: DailyBudget raced (JSONDecodeError) when several investigations ran at once ---------------
++
++def test_k8_budget_is_exact_under_threads_and_survives_corruption(tmp_dir):
++    from satyapan.security.ratelimit import DailyBudget
++    path = tmp_dir / "budget.json"
++    granted, errors = [], []
++
++    def worker():
++        b = DailyBudget(path, {"tool": 20})
++        for _ in range(5):
++            try:
++                granted.append(b.take("tool"))
++            except Exception as exc:  # noqa: BLE001
++                errors.append(exc)
++    threads = [threading.Thread(target=worker) for _ in range(8)]
++    [t.start() for t in threads]
++    [t.join() for t in threads]
++    assert not errors and sum(granted) == 20
++    path.write_text("{not json")
++    assert DailyBudget(path, {"tool": 1}).take("tool") is True
++
++
++# K9: a subprocess timeout (OCR under load) crashed the whole investigation ---------------------
++
++def test_k9_subprocess_timeout_is_a_tool_failure_not_a_crash():
++    state = new_state()
++
++    def slow():
++        raise subprocess.TimeoutExpired(cmd="tesseract", timeout=30)
++    assert _run(state, "ocr_tesseract", "M1", slow, local=True) is None
++    assert state["tool_runs"][0].status == "SERVICE_ERROR" and "timed out" in state["tool_runs"][0].detail
++
++
++def test_k9_ocr_ignores_photos_without_text():
++    from satyapan.ocr import available_languages, ocr_image
++    if "eng" not in available_languages():
++        pytest.skip("tesseract eng data not available")
++    res = ocr_image(need(MEDIA / "images" / "chelsea.png"), "eng")
++    assert res["ok"] and res["low_confidence"] and res["text"] == ""
++
++
++def test_k9_ocr_keeps_a_caption_next_to_a_photo(tmp_dir):
++    """A whole-image mean-confidence gate dropped captions when the photo part was large.
++    The line-level gate keeps confident lines and drops photo junk."""
++    from PIL import ImageDraw, ImageFont
++    from satyapan.ocr import available_languages, ocr_image
++    if "eng" not in available_languages():
++        pytest.skip("tesseract eng data not available")
++    font = need(MEDIA / "fonts" / "NotoSansDevanagari.ttf")
++    photo = Image.open(need(MEDIA / "images" / "coffee.png")).convert("RGB")
++    canvas = Image.new("RGB", (photo.width + 40, photo.height + 120), (236, 229, 221))
++    canvas.paste(photo, (20, 20))
++    ImageDraw.Draw(canvas).text((20, photo.height + 40), "PIB: Government gives Rs 5000 to every family, register now",
++                                font=ImageFont.truetype(str(font), 22), fill="black")
++    path = tmp_dir / "caption.jpg"
++    canvas.save(path, quality=80)
++    res = ocr_image(path, "eng")
++    assert not res["low_confidence"] and "Government gives Rs 5000" in res["text"]
++
++
++# K10: upload limits ----------------------------------------------------------------------------
++
++def test_k10_pixel_limit_between_one_and_two_times(tmp_dir):
++    from satyapan.security.uploads import validate_upload
++    p = tmp_dir / "60mp.png"
++    Image.new("1", (8000, 7500)).save(p, "PNG")
++    info = validate_upload(p, "60mp.png")
++    assert not info.ok and "pixel limit" in info.errors[0]
++
++
++def test_k10_api_requires_and_enforces_content_length(monkeypatch):
++    from fastapi.testclient import TestClient
++    import satyapan.api.app as api
++    client = TestClient(api.app)
++    api.bucket._state.clear()
++    r = client.post("/v1/investigations", content=iter([b"text=hello"]),
++                    headers={"Content-Type": "application/x-www-form-urlencoded"})
++    assert r.status_code == 411
++    monkeypatch.setattr(api, "MAX_REQUEST", 100)
++    r = client.post("/v1/investigations", data={"text": "x" * 500})
++    assert r.status_code == 413
++    api.bucket._state.clear()
++
++
++# K11: retention was never enforced and did not cover investigation records ---------------------
++
++def test_k11_sweep_covers_investigation_records(tmp_dir):
++    from satyapan.storage import Store
++    st = Store(tmp_dir)
++    st.save("old1", {"status": "done"})
++    st.save("new1", {"status": "done"})
++    old = time.time() - 48 * 3600
++    os.utime(tmp_dir / "investigations" / "old1.json", (old, old))
++    assert st.sweep(retention_hours=24) == 1
++    assert st.load("old1") is None and st.load("new1") is not None
++
++
++# K12: crafted host names reached the RDAP request path -----------------------------------------
++
++def test_k12_crafted_hosts_are_invalid_and_never_official(offline_client):
++    from satyapan.links import rdap
++    info = domain_info("http://evil%2F..%2Fpib.gov.in/")
++    assert not info["valid_host"] and not info["official_suffix"]
++    with pytest.raises(ToolError) as exc:
++        rdap.lookup(offline_client, "evil%2f..%2fadmin.com")
++    assert exc.value.status == ToolStatus.INPUT_ERROR
++    assert domain_info("http://x.com\\@pib.gov.in/")["registered"] == "x.com"
++
++
++# K13: a 180.02 s file was rejected by a 180 s limit --------------------------------------------
++
++def test_k13_duration_limit_has_a_tolerance(tmp_dir):
++    from satyapan.security.uploads import validate_upload
++    p = tmp_dir / "a.ogg"
++    subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i",
++                    "sine=frequency=300:sample_rate=8000:duration=180.2", "-c:a", "libopus", "-b:a", "8k", str(p)],
++                   check=True)
++    assert validate_upload(p, "a.ogg").ok
++
++
++# K14: the dataset validator missed near-duplicate leakage --------------------------------------
++
++def test_k14_validator_flags_near_duplicate_images_and_claims(tmp_dir, images):
++    sys.path.insert(0, str(ROOT / "eval"))
++    from validate_manifest import near_duplicates
++    media = tmp_dir / "media"
++    media.mkdir()
++    Image.open(images[0]).convert("RGB").save(media / "dev.jpg", "JPEG")
++    Image.open(images[0]).convert("RGB").resize((200, 150)).save(media / "test.jpg", "JPEG", quality=60)
++    rows = [{"sample_id": "D1", "split": "dev", "input_file": "dev.jpg", "claim_text": "Free laptops for all students",
++             "notes": ""},
++            {"sample_id": "T1", "split": "test", "input_file": "test.jpg",
++             "claim_text": "Free laptops for all the students!", "notes": ""}]
++    problems = near_duplicates(rows, media)
++    assert any("image" in p for p in problems) and any("claim text" in p for p in problems)
++    rows[1]["notes"] = "leak-reviewed"
++    assert near_duplicates(rows, media) == []
++
++
++# K15: reason statements were not ordered by strength -------------------------------------------
++
++def test_k15_statements_strongest_first():
++    from satyapan.pipeline.report import template_statements
++    evs = [Evidence(id=f"E{i}", tool="t", source_name="S", source_url=None, target="x", kind="k", stance="contradicts",
++                    strength=s, established=f"fact {i}", independence_key=f"k{i}")
++           for i, s in ((1, "weak"), (2, "strong"), (10, "moderate"))]
++    out = template_statements(evs, ["E1", "E2", "E10"])
++    assert [s.evidence_ids[0] for s in out] == ["E2", "E10", "E1"]
++
++
++# K16: a fresh install loaded EMPTY allowlists (templates were never copied into data/) ---------
++
++def test_k16_default_context_falls_back_to_shipped_lists(tmp_dir, monkeypatch):
++    from satyapan.config import get_settings
++    monkeypatch.setenv("SATYAPAN_DATA_DIR", str(tmp_dir / "fresh"))
++    get_settings.cache_clear()
++    try:
++        ctx = Context.default()
++        assert "rbi.org.in" in ctx.official_domains and ctx.factcheckers
++    finally:
++        monkeypatch.undo()
++        get_settings.cache_clear()
++
++
++# K17: an UNCALIBRATED AI-detector score was shown as a number (reads like "97% AI") ------------
++
++def test_k17_uncalibrated_detector_score_is_not_presented(tmp_dir, monkeypatch, images):
++    """Mocked transport: the Sightengine reply below is a FIXTURE, not a live response."""
++    import httpx
++    from satyapan.config import get_settings
++    from satyapan.http import ApiClient
++    monkeypatch.setenv("SIGHTENGINE_USER", "fixtureuser")
++    monkeypatch.setenv("SIGHTENGINE_SECRET", "fixturesecret")
++    get_settings.cache_clear()
++    try:
++        def fake(request: httpx.Request):
++            if request.url.host == "api.sightengine.com":
++                return httpx.Response(200, json={"status": "success", "type": {"ai_generated": 0.97},
++                                                 "request": {"operations": 5}})
++            raise httpx.ConnectError("offline", request=request)
++        client = ApiClient(get_settings(), transport=httpx.MockTransport(fake))
++        st = run(new_state(media=[(images[0], images[0].name)], consent={"third_party_media": True}),
++                 ctx_for(client, tmp_dir))
++        rep = to_report(st)
++        ev = [e for e in rep.evidence if e.tool == "sightengine_genai"]
++        assert ev and ev[0].stance == "neutral" and "0.97" not in ev[0].established
++        assert rep.media_assessment["M1"]["synthetic_signal"] == "NOT_CALIBRATED"
++    finally:
++        monkeypatch.undo()
++        get_settings.cache_clear()
++
++
++# K18 to K22 were found by an INDEPENDENT tester that never saw the cases above or the code
++# (audit/independent_adversarial.py). Inputs below are that tester's cases.
++
++# K18: a Devanagari danda after a URL became part of the host, so a genuine Hindi message was FAKE
++
++def test_k18_danda_after_url_is_punctuation(offline_client, tmp_dir):
++    from satyapan.claims import extract_urls
++    text = "प्रधानमंत्री किसान सम्मान निधि की 21वीं किस्त जारी कर दी गई है। लाभार्थी अपनी स्थिति यहाँ देखें https://pmkisan.gov.in।"
++    assert extract_urls(text) == ["https://pmkisan.gov.in"]
++    assert to_report(run(new_state(text=text), ctx_for(offline_client, tmp_dir))).verdict != "FAKE"
++    assert not domain_info("https://pmkisan.gov.in।/")["valid_host"]
++
++
++# K19: zero-width and full-width characters hid an official name inside a scam host
++
++def test_k19_invisible_and_fullwidth_characters_are_normalised(offline_client, tmp_dir):
++    for text in ("PM Kisan: Rs 6,000 extra benefit for registered farmers. Register before 5 November: "
++                 "http://pmki​san.gov.in.benefit-claim.top/register",
++                 "UIDAI alert: your Aadhaar will be deactivated in 24 hours. Update KYC now: "
++                 "https://uidai．gov．in．kyc-update．top/login"):
++        rep = to_report(run(new_state(text=text), ctx_for(offline_client, tmp_dir)))
++        assert rep.verdict == "FAKE", text
++    a = analyse_url("http://pmki​san.gov.in.benefit-claim.top/register", OFFICIAL)
++    assert "hidden_or_fullwidth_characters" in a["flags"] and "official_name_inside_other_domain" in a["flags"]
++
++
++# K20: text was cut at 5,000 characters BEFORE links were read, so a link at the end vanished
++
++def test_k20_links_survive_text_truncation(offline_client, tmp_dir):
++    text = "Government of India scheme update for all citizens. " * 1150 + \
++           "Claim your PM Kisan bonus now: https://pmkisan.gov.in.bonus-claim.top/apply"
++    st = run(new_state(text=text), ctx_for(offline_client, tmp_dir))
++    assert "https://pmkisan.gov.in.bonus-claim.top/apply" in st["links"]
++    assert to_report(st).verdict == "FAKE"
++
++
++# K21: dates were not compared, so a release saying December "confirmed" a message saying November
++
++def test_k21_dates_must_agree_for_official_support(offline_client, tmp_dir):
++    ctx = ctx_for(offline_client, tmp_dir)
++    ctx.pib.add([{"title": "FIXTURE CBDT extends due date for filing income tax returns to 15 December 2026",
++                  "link": "https://pib.gov.in/PressReleasePage.aspx?PRID=2100002", "summary": ""}])
++    bad = "CBDT extends due date for filing income tax returns to 15 November 2026. File at https://www.incometax.gov.in"
++    good = "CBDT extends due date for filing income tax returns to 15 December 2026. File at https://www.incometax.gov.in"
++    assert to_report(run(new_state(text=bad), ctx)).verdict != "GENUINE"
++    assert to_report(run(new_state(text=good), ctx)).verdict == "GENUINE"
++
++
++# K22: an open redirect on an official domain counted as an official link
++
++def test_k22_redirect_parameter_on_official_domain_is_not_official(offline_client, tmp_dir):
++    url = "https://uidai.gov.in/redirect?url=https%3A%2F%2Faadhaar-docs-update.top%2Flogin"
++    a = analyse_url(url, OFFICIAL)
++    assert "redirects_to_other_site" in a["flags"] and a["embedded_targets"] == ["https://aadhaar-docs-update.top/login"]
++    ctx = ctx_for(offline_client, tmp_dir)
++    ctx.pib.add([{"title": "FIXTURE UIDAI extends free online Aadhaar document update facility till 14 December 2026",
++                  "link": "https://pib.gov.in/PressReleasePage.aspx?PRID=2100004", "summary": ""}])
++    text = f"UIDAI extends free online Aadhaar document update facility till 14 December 2026. Update: {url}"
++    st = run(new_state(text=text), ctx)
++    assert to_report(st).verdict != "GENUINE"
++    assert "https://aadhaar-docs-update.top/login" in st["links"]
++    plain = "UIDAI extends free online Aadhaar document update facility till 14 December 2026. Update: https://uidai.gov.in/"
++    assert to_report(run(new_state(text=plain), ctx)).verdict == "GENUINE"
++
++
++# K23: "Rs 5 crore" was read as Rs 5 (the multiplier was dropped after a currency prefix)
++
++def test_k23_lakh_and_crore_after_currency_prefix(offline_client, tmp_dir):
++    from satyapan.claims import AMOUNT_RE, amount_value
++    assert AMOUNT_RE.findall("cover of Rs 5 crore per family") == ["Rs 5 crore"]
++    assert amount_value("Rs 5 crore") == 5e7 and amount_value("₹5 lakh") == 5e5
++    ctx = ctx_for(offline_client, tmp_dir)
++    ctx.pib.add([{"title": "FIXTURE Ayushman Bharat PM-JAY health cover of Rs 5 lakh per family extended in 5 more states",
++                  "link": "https://pib.gov.in/PressReleasePage.aspx?PRID=2100001", "summary": ""}])
++    bad = "Ayushman Bharat PM-JAY health cover of Rs 5 crore per family extended in 5 more states. https://pmjay.gov.in"
++    good = "Ayushman Bharat PM-JAY health cover of Rs 5 lakh per family extended in 5 more states. https://pmjay.gov.in"
++    assert to_report(run(new_state(text=bad), ctx)).verdict != "GENUINE"
++    assert to_report(run(new_state(text=good), ctx)).verdict == "GENUINE"

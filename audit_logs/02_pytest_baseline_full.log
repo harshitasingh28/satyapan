@@ -1,0 +1,263 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /tmp/claude-0/audit/src/satyapan-feasibility/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /tmp/claude-0/audit/src/satyapan-feasibility
+configfile: pytest.ini
+testpaths: tests
+plugins: langsmith-0.14.16, anyio-4.15.1
+collecting ... collected 66 items
+
+tests/test_api.py::test_text_investigation_end_to_end PASSED             [  1%]
+tests/test_api.py::test_rejects_empty_and_bad_files PASSED               [  3%]
+tests/test_api.py::test_unknown_id_and_path_tricks PASSED                [  4%]
+tests/test_api.py::test_rate_limit PASSED                                [  6%]
+tests/test_claims.py::test_hindi_english_scam_message PASSED             [  7%]
+tests/test_claims.py::test_bare_domains_and_false_positives PASSED       [  9%]
+tests/test_claims.py::test_language_detection PASSED                     [ 10%]
+tests/test_claims.py::test_telugu_entities PASSED                        [ 12%]
+tests/test_claims.py::test_llm_grounding_rejects_invented_claims PASSED  [ 13%]
+tests/test_claims.py::test_bm25_keeps_hindi_words_whole PASSED           [ 15%]
+tests/test_links.py::test_official_and_allowlisted PASSED                [ 16%]
+tests/test_links.py::test_impersonation_patterns PASSED                  [ 18%]
+tests/test_links.py::test_punycode_homoglyph PASSED                      [ 19%]
+tests/test_links.py::test_shortener_and_private_target PASSED            [ 21%]
+tests/test_media.py::test_image_index_real_photos PASSED                 [ 22%]
+tests/test_media.py::test_index_save_load PASSED                         [ 24%]
+tests/test_media.py::test_c2pa_present_none_and_stripped PASSED          [ 25%]
+tests/test_media.py::test_video_keyframes_find_recycled_frames PASSED    [ 27%]
+tests/test_media.py::test_audio_fingerprint_real_speech PASSED           [ 28%]
+tests/test_media.py::test_voice_authenticity_defaults_to_unverified PASSED [ 30%]
+tests/test_media.py::test_ocr_rendered_hindi_english PASSED              [ 31%]
+tests/test_pipeline.py::test_independence_counts_once PASSED             [ 33%]
+tests/test_pipeline.py::test_verdict_rules[items0-FAKE] PASSED           [ 34%]
+tests/test_pipeline.py::test_verdict_rules[items1-FAKE] PASSED           [ 36%]
+tests/test_pipeline.py::test_verdict_rules[items2-UNVERIFIED] PASSED     [ 37%]
+tests/test_pipeline.py::test_verdict_rules[items3-GENUINE] PASSED        [ 39%]
+tests/test_pipeline.py::test_verdict_rules[items4-UNVERIFIED] PASSED     [ 40%]
+tests/test_pipeline.py::test_verdict_rules[items5-UNVERIFIED] PASSED     [ 42%]
+tests/test_pipeline.py::test_verdict_rules[items6-UNVERIFIED] PASSED     [ 43%]
+tests/test_pipeline.py::test_citation_validator PASSED                   [ 45%]
+tests/test_pipeline.py::test_graph_impersonation_is_fake_even_offline PASSED [ 46%]
+tests/test_pipeline.py::test_graph_genuine_needs_official_record PASSED  [ 48%]
+tests/test_pipeline.py::test_graph_nothing_found_is_unverified PASSED    [ 50%]
+tests/test_pipeline.py::test_graph_known_debunked_image PASSED           [ 51%]
+tests/test_pipeline.py::test_graph_conflict_runs_self_correction PASSED  [ 53%]
+tests/test_pipeline.py::test_langgraph_runner_matches_plain_runner PASSED [ 54%]
+tests/test_security.py::test_rejects_unsafe_urls[file:///etc/passwd] PASSED [ 56%]
+tests/test_security.py::test_rejects_unsafe_urls[gopher://example.com] PASSED [ 57%]
+tests/test_security.py::test_rejects_unsafe_urls[http://127.0.0.1/] PASSED [ 59%]
+tests/test_security.py::test_rejects_unsafe_urls[http://2130706433/] PASSED [ 60%]
+tests/test_security.py::test_rejects_unsafe_urls[http://0x7f000001/] PASSED [ 62%]
+tests/test_security.py::test_rejects_unsafe_urls[http://127.1/] PASSED   [ 63%]
+tests/test_security.py::test_rejects_unsafe_urls[http://[::1]/] PASSED   [ 65%]
+tests/test_security.py::test_rejects_unsafe_urls[http://[::ffff:127.0.0.1]/] PASSED [ 66%]
+tests/test_security.py::test_rejects_unsafe_urls[http://169.254.169.254/latest/meta-data] PASSED [ 68%]
+tests/test_security.py::test_rejects_unsafe_urls[http://10.0.0.5/] PASSED [ 69%]
+tests/test_security.py::test_rejects_unsafe_urls[http://192.168.1.1/] PASSED [ 71%]
+tests/test_security.py::test_rejects_unsafe_urls[http://100.64.1.1/] PASSED [ 72%]
+tests/test_security.py::test_rejects_unsafe_urls[http://localhost:80/] PASSED [ 74%]
+tests/test_security.py::test_rejects_unsafe_urls[http://router.local/] PASSED [ 75%]
+tests/test_security.py::test_rejects_unsafe_urls[http://db.internal/] PASSED [ 77%]
+tests/test_security.py::test_rejects_unsafe_urls[http://user:pass@example.com/] PASSED [ 78%]
+tests/test_security.py::test_rejects_unsafe_urls[http://example.com:8080/] PASSED [ 80%]
+tests/test_security.py::test_rejects_unsafe_urls[http://0.0.0.0/] PASSED [ 81%]
+tests/test_security.py::test_accepts_public_urls PASSED                  [ 83%]
+tests/test_security.py::test_dns_rebinding_is_caught_by_resolution PASSED [ 84%]
+tests/test_security.py::test_guarded_fetch_refuses_redirect_to_private_address PASSED [ 86%]
+tests/test_security.py::test_sniff_and_upload_validation PASSED          [ 87%]
+tests/test_security.py::test_decompression_bomb_rejected PASSED          [ 89%]
+tests/test_security.py::test_sanitized_copy_strips_metadata PASSED       [ 90%]
+tests/test_security.py::test_redaction PASSED                            [ 92%]
+tests/test_security.py::test_allowlist_blocks_other_hosts PASSED         [ 93%]
+tests/test_security.py::test_status_mapping[429-RATE_LIMITED] PASSED     [ 95%]
+tests/test_security.py::test_status_mapping[403-AUTH_REQUIRED] PASSED    [ 96%]
+tests/test_security.py::test_status_mapping[503-SERVICE_ERROR] PASSED    [ 98%]
+tests/test_security.py::test_rate_limit_and_budget PASSED                [100%]
+
+==================================== PASSES ====================================
+______________________ test_text_investigation_end_to_end ______________________
+----------------------------- Captured stderr call -----------------------------
+{"ts": "2026-10-30T21:22:50", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:50", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: GET http://testserver/v1/investigations/34daf63f3a73 \"HTTP/1.1 200 OK\""}
+{"ts": "2026-10-30T21:22:50", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: GET http://testserver/v1/investigations/34daf63f3a73 \"HTTP/1.1 200 OK\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: GET http://testserver/v1/investigations/34daf63f3a73 \"HTTP/1.1 200 OK\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "34daf63f3a73", "verdict": "FAKE"}}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: GET http://testserver/v1/investigations/34daf63f3a73 \"HTTP/1.1 200 OK\""}
+------------------------------ Captured log call -------------------------------
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     httpx2:_client.py:1084 HTTP Request: GET http://testserver/v1/investigations/34daf63f3a73 "HTTP/1.1 200 OK"
+INFO     httpx2:_client.py:1084 HTTP Request: GET http://testserver/v1/investigations/34daf63f3a73 "HTTP/1.1 200 OK"
+INFO     httpx2:_client.py:1084 HTTP Request: GET http://testserver/v1/investigations/34daf63f3a73 "HTTP/1.1 200 OK"
+INFO     satyapan.api:logging_setup.py:42 investigation done
+INFO     httpx2:_client.py:1084 HTTP Request: GET http://testserver/v1/investigations/34daf63f3a73 "HTTP/1.1 200 OK"
+_______________________ test_rejects_empty_and_bad_files _______________________
+----------------------------- Captured stderr call -----------------------------
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 400 Bad Request\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: GET http://testserver/v1/investigations/93776480dcb1 \"HTTP/1.1 200 OK\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "93776480dcb1", "verdict": "UNVERIFIED"}}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: GET http://testserver/v1/investigations/93776480dcb1 \"HTTP/1.1 200 OK\""}
+------------------------------ Captured log call -------------------------------
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 400 Bad Request"
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     httpx2:_client.py:1084 HTTP Request: GET http://testserver/v1/investigations/93776480dcb1 "HTTP/1.1 200 OK"
+INFO     satyapan.api:logging_setup.py:42 investigation done
+INFO     httpx2:_client.py:1084 HTTP Request: GET http://testserver/v1/investigations/93776480dcb1 "HTTP/1.1 200 OK"
+_______________________ test_unknown_id_and_path_tricks ________________________
+----------------------------- Captured stderr call -----------------------------
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: GET http://testserver/v1/investigations/doesnotexist \"HTTP/1.1 404 Not Found\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: GET http://testserver/v1/investigations/..%2F..%2Fetc \"HTTP/1.1 404 Not Found\""}
+------------------------------ Captured log call -------------------------------
+INFO     httpx2:_client.py:1084 HTTP Request: GET http://testserver/v1/investigations/doesnotexist "HTTP/1.1 404 Not Found"
+INFO     httpx2:_client.py:1084 HTTP Request: GET http://testserver/v1/investigations/..%2F..%2Fetc "HTTP/1.1 404 Not Found"
+_______________________________ test_rate_limit ________________________________
+----------------------------- Captured stderr call -----------------------------
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "67fdf041a3f0", "verdict": "UNVERIFIED"}}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 202 Accepted\""}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "6668c373be9b", "verdict": "UNVERIFIED"}}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "f69d94152907", "verdict": "UNVERIFIED"}}
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "httpx2", "msg": "HTTP Request: POST http://testserver/v1/investigations \"HTTP/1.1 429 Too Many Requests\""}
+------------------------------ Captured log call -------------------------------
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     satyapan.api:logging_setup.py:42 investigation done
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 202 Accepted"
+INFO     satyapan.api:logging_setup.py:42 investigation done
+INFO     satyapan.api:logging_setup.py:42 investigation done
+INFO     httpx2:_client.py:1084 HTTP Request: POST http://testserver/v1/investigations "HTTP/1.1 429 Too Many Requests"
+___________________________ test_punycode_homoglyph ____________________________
+----------------------------- Captured stderr call -----------------------------
+{"ts": "2026-10-30T21:22:51", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "3a51b01199a2", "verdict": "UNVERIFIED"}}
+------------------------------ Captured log call -------------------------------
+INFO     satyapan.api:logging_setup.py:42 investigation done
+--------------------------- Captured stderr teardown ---------------------------
+{"ts": "2026-10-30T21:22:52", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "8e754d6bed54", "verdict": "UNVERIFIED"}}
+_________________________ test_image_index_real_photos _________________________
+----------------------------- Captured stderr call -----------------------------
+{"ts": "2026-10-30T21:22:52", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "8620190d98d0", "verdict": "UNVERIFIED"}}
+{"ts": "2026-10-30T21:22:52", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "ccae1edbcb34", "verdict": "UNVERIFIED"}}
+{"ts": "2026-10-30T21:22:52", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "3fcb5c194fd4", "verdict": "UNVERIFIED"}}
+{"ts": "2026-10-30T21:22:52", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "46a5ff7f6f5a", "verdict": "UNVERIFIED"}}
+{"ts": "2026-10-30T21:22:52", "level": "INFO", "logger": "satyapan.api", "msg": "investigation done", "fields": {"id": "98992c7786d3", "verdict": "UNVERIFIED"}}
+------------------------------ Captured log call -------------------------------
+INFO     satyapan.api:logging_setup.py:42 investigation done
+INFO     satyapan.api:logging_setup.py:42 investigation done
+INFO     satyapan.api:logging_setup.py:42 investigation done
+INFO     satyapan.api:logging_setup.py:42 investigation done
+INFO     satyapan.api:logging_setup.py:42 investigation done
+INFO     satyapan.api:logging_setup.py:42 investigation done
+____________ test_guarded_fetch_refuses_redirect_to_private_address ____________
+----------------------------- Captured stderr call -----------------------------
+{"ts": "2026-10-30T21:22:58", "level": "INFO", "logger": "httpx", "msg": "HTTP Request: GET https://93.184.216.34/abc \"HTTP/1.1 302 Found\""}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET https://93.184.216.34/abc "HTTP/1.1 302 Found"
+____________________ test_status_mapping[429-RATE_LIMITED] _____________________
+----------------------------- Captured stderr call -----------------------------
+{"ts": "2026-10-30T21:22:59", "level": "INFO", "logger": "httpx", "msg": "HTTP Request: GET https://urlscan.io/api/v1/quotas \"HTTP/1.1 429 Too Many Requests\""}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET https://urlscan.io/api/v1/quotas "HTTP/1.1 429 Too Many Requests"
+____________________ test_status_mapping[403-AUTH_REQUIRED] ____________________
+----------------------------- Captured stderr call -----------------------------
+{"ts": "2026-10-30T21:22:59", "level": "INFO", "logger": "httpx", "msg": "HTTP Request: GET https://urlscan.io/api/v1/quotas \"HTTP/1.1 403 Forbidden\""}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET https://urlscan.io/api/v1/quotas "HTTP/1.1 403 Forbidden"
+____________________ test_status_mapping[503-SERVICE_ERROR] ____________________
+----------------------------- Captured stderr call -----------------------------
+{"ts": "2026-10-30T21:22:59", "level": "INFO", "logger": "httpx", "msg": "HTTP Request: GET https://urlscan.io/api/v1/quotas \"HTTP/1.1 503 Service Unavailable\""}
+------------------------------ Captured log call -------------------------------
+INFO     httpx:_client.py:1025 HTTP Request: GET https://urlscan.io/api/v1/quotas "HTTP/1.1 503 Service Unavailable"
+============================= slowest 10 durations =============================
+3.02s call     tests/test_media.py::test_video_keyframes_find_recycled_frames
+1.05s call     tests/test_media.py::test_audio_fingerprint_real_speech
+1.03s call     tests/test_media.py::test_image_index_real_photos
+0.87s call     tests/test_pipeline.py::test_langgraph_runner_matches_plain_runner
+0.72s call     tests/test_api.py::test_text_investigation_end_to_end
+0.34s call     tests/test_api.py::test_rate_limit
+0.33s call     tests/test_media.py::test_ocr_rendered_hindi_english
+0.25s call     tests/test_pipeline.py::test_graph_known_debunked_image
+0.24s call     tests/test_api.py::test_rejects_empty_and_bad_files
+0.20s setup    tests/test_media.py::test_index_save_load
+=========================== short test summary info ============================
+PASSED tests/test_api.py::test_text_investigation_end_to_end
+PASSED tests/test_api.py::test_rejects_empty_and_bad_files
+PASSED tests/test_api.py::test_unknown_id_and_path_tricks
+PASSED tests/test_api.py::test_rate_limit
+PASSED tests/test_claims.py::test_hindi_english_scam_message
+PASSED tests/test_claims.py::test_bare_domains_and_false_positives
+PASSED tests/test_claims.py::test_language_detection
+PASSED tests/test_claims.py::test_telugu_entities
+PASSED tests/test_claims.py::test_llm_grounding_rejects_invented_claims
+PASSED tests/test_claims.py::test_bm25_keeps_hindi_words_whole
+PASSED tests/test_links.py::test_official_and_allowlisted
+PASSED tests/test_links.py::test_impersonation_patterns
+PASSED tests/test_links.py::test_punycode_homoglyph
+PASSED tests/test_links.py::test_shortener_and_private_target
+PASSED tests/test_media.py::test_image_index_real_photos
+PASSED tests/test_media.py::test_index_save_load
+PASSED tests/test_media.py::test_c2pa_present_none_and_stripped
+PASSED tests/test_media.py::test_video_keyframes_find_recycled_frames
+PASSED tests/test_media.py::test_audio_fingerprint_real_speech
+PASSED tests/test_media.py::test_voice_authenticity_defaults_to_unverified
+PASSED tests/test_media.py::test_ocr_rendered_hindi_english
+PASSED tests/test_pipeline.py::test_independence_counts_once
+PASSED tests/test_pipeline.py::test_verdict_rules[items0-FAKE]
+PASSED tests/test_pipeline.py::test_verdict_rules[items1-FAKE]
+PASSED tests/test_pipeline.py::test_verdict_rules[items2-UNVERIFIED]
+PASSED tests/test_pipeline.py::test_verdict_rules[items3-GENUINE]
+PASSED tests/test_pipeline.py::test_verdict_rules[items4-UNVERIFIED]
+PASSED tests/test_pipeline.py::test_verdict_rules[items5-UNVERIFIED]
+PASSED tests/test_pipeline.py::test_verdict_rules[items6-UNVERIFIED]
+PASSED tests/test_pipeline.py::test_citation_validator
+PASSED tests/test_pipeline.py::test_graph_impersonation_is_fake_even_offline
+PASSED tests/test_pipeline.py::test_graph_genuine_needs_official_record
+PASSED tests/test_pipeline.py::test_graph_nothing_found_is_unverified
+PASSED tests/test_pipeline.py::test_graph_known_debunked_image
+PASSED tests/test_pipeline.py::test_graph_conflict_runs_self_correction
+PASSED tests/test_pipeline.py::test_langgraph_runner_matches_plain_runner
+PASSED tests/test_security.py::test_rejects_unsafe_urls[file:///etc/passwd]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[gopher://example.com]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://127.0.0.1/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://2130706433/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://0x7f000001/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://127.1/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://[::1]/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://[::ffff:127.0.0.1]/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://169.254.169.254/latest/meta-data]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://10.0.0.5/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://192.168.1.1/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://100.64.1.1/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://localhost:80/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://router.local/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://db.internal/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://user:pass@example.com/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://example.com:8080/]
+PASSED tests/test_security.py::test_rejects_unsafe_urls[http://0.0.0.0/]
+PASSED tests/test_security.py::test_accepts_public_urls
+PASSED tests/test_security.py::test_dns_rebinding_is_caught_by_resolution
+PASSED tests/test_security.py::test_guarded_fetch_refuses_redirect_to_private_address
+PASSED tests/test_security.py::test_sniff_and_upload_validation
+PASSED tests/test_security.py::test_decompression_bomb_rejected
+PASSED tests/test_security.py::test_sanitized_copy_strips_metadata
+PASSED tests/test_security.py::test_redaction
+PASSED tests/test_security.py::test_allowlist_blocks_other_hosts
+PASSED tests/test_security.py::test_status_mapping[429-RATE_LIMITED]
+PASSED tests/test_security.py::test_status_mapping[403-AUTH_REQUIRED]
+PASSED tests/test_security.py::test_status_mapping[503-SERVICE_ERROR]
+PASSED tests/test_security.py::test_rate_limit_and_budget
+============================= 66 passed in 10.00s ==============================

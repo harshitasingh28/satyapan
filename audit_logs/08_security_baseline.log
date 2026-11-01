@@ -1,0 +1,24 @@
+PASS  [SSRF] server made no request to itself via submitted links  /health hits before 31, after 31
+PASS  [SSRF] unsafe links never passed to RDAP / Safe Browsing / urlscan  []
+PASS  [Path traversal] client filename not used as a path  
+PASS  [Uploads] oversized upload refused (413)  HTTP 413 after 0.28 s (body fully sent before refusal: yes)
+FAIL  [Uploads] huge Content-Length rejected before reading the body  server kept the connection open, waiting for a declared 2 GB body (4 s timeout)
+FAIL  [Retention] uploads are removed after processing or on a schedule  4 uploaded files still on disk, sweep is never scheduled by the app
+FAIL  [Retention] investigation records (contain user text) expire  18 investigation JSON files kept indefinitely. Store.sweep() does not cover them
+/tmp/claude-0/audit/src/satyapan-feasibility/.venv/lib/python3.12/site-packages/PIL/Image.py:3593: DecompressionBombWarning: Image size (60000000 pixels) exceeds limit of 40000000 pixels, could be decompression bomb DOS attack.
+  warnings.warn(
+FAIL  [Uploads] 60 MP image rejected (configured limit 40 MP)  ok=True errors=[] size=7354 bytes
+PASS  [Uploads] random bytes with an MP4 header rejected  
+PASS  [Uploads] corrupt WAV rejected  
+PASS  [Uploads] MP4 with no video stream handled (rejected as video or accepted as audio)  kind=video ok=False errors=['no video stream']
+PASS  [Uploads] JPEG with appended payload (polyglot) noted  accepted=True. Not executed, and re-encoded before any third-party upload
+PASS  [URL schemes] javascript rejected  
+PASS  [URL schemes] data rejected  
+PASS  [URL schemes] file rejected  
+PASS  [URL schemes] vbscript rejected  
+PASS  [URL schemes] jar rejected  
+FAIL  [Injection] crafted host gives a safe RDAP domain: http://evil%2F..%2Fadmin.com/  registered='%2fadmin.com'
+FAIL  [Injection] crafted host gives a safe RDAP domain: http://a.b.com%23frag/  registered='a.b.com%23frag'
+PASS  [Injection] crafted host gives a safe RDAP domain: http://x.com\@pib.gov.in/  registered='pib.gov.in'
+
+14/20 security checks passed. Saved results/audit/security_practical_BASELINE.json

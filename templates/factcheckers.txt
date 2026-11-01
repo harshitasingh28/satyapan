@@ -1,0 +1,11 @@
+# Review-publisher sites treated as established fact-checkers (strong evidence when they match).
+# Confirm each against the IFCN signatories list before relying on it: https://ifcncodeofprinciples.poynter.org/signatories
+boomlive.in
+factly.in
+vishvasnews.com
+altnews.in
+newschecker.in
+thequint.com
+indiatoday.in
+factcrescendo.com
+newsmeter.in

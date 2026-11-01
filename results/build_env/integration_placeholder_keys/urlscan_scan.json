@@ -1,0 +1,33 @@
+{
+ "test": "urlscan_scan",
+ "run_at": "2026-10-30T20:36:18+00:00",
+ "host": "vm",
+ "status": "BLOCKED",
+ "request_sent": true,
+ "genuine_external": false,
+ "error": "network: 403 Forbidden",
+ "http_status": null,
+ "elapsed_ms": 2543.0,
+ "calls": [
+  {
+   "tool": "urlscan_scan",
+   "method": "POST",
+   "url": "https://urlscan.io/api/v1/scan",
+   "http_status": null,
+   "ms": 262.8,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "urlscan_scan",
+   "method": "POST",
+   "url": "https://urlscan.io/api/v1/scan",
+   "http_status": null,
+   "ms": 277.6,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  }
+ ]
+}

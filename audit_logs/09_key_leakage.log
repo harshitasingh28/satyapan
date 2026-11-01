@@ -1,0 +1,5 @@
+real network: key in report/calls/logs: False
+echoing service: key in stored report: True
+   leaked via tool_runs.detail: safe_browsing bad request for https://safebrowsing.googleapis.com/v4/threatMatches:find?key=AUDITKEY1234567890
+### integration harness outputs
+no key in integration_results

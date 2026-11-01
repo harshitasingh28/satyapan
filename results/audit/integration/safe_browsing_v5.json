@@ -1,0 +1,33 @@
+{
+ "test": "safe_browsing_v5",
+ "run_at": "2026-10-30T21:39:18+00:00",
+ "host": "vm",
+ "status": "BLOCKED",
+ "request_sent": true,
+ "genuine_external": false,
+ "error": "network: 403 Forbidden",
+ "http_status": null,
+ "elapsed_ms": 2519.4,
+ "calls": [
+  {
+   "tool": "safe_browsing_v5",
+   "method": "GET",
+   "url": "https://safebrowsing.googleapis.com/v5/urls:search?urls=http%3A%2F%2Ftestsafebrowsing.appspot.com%2Fs%2Fphishing.html&urls=https%3A%2F%2Fwww.india.gov.in%2F&key=REDACTED",
+   "http_status": null,
+   "ms": 261.9,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "safe_browsing_v5",
+   "method": "GET",
+   "url": "https://safebrowsing.googleapis.com/v5/urls:search?urls=http%3A%2F%2Ftestsafebrowsing.appspot.com%2Fs%2Fphishing.html&urls=https%3A%2F%2Fwww.india.gov.in%2F&key=REDACTED",
+   "http_status": null,
+   "ms": 256.7,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  }
+ ]
+}

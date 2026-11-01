@@ -1,0 +1,33 @@
+{
+ "test": "safe_browsing_v4",
+ "run_at": "2026-10-30T20:35:58+00:00",
+ "host": "vm",
+ "status": "BLOCKED",
+ "request_sent": true,
+ "genuine_external": false,
+ "error": "network: 403 Forbidden",
+ "http_status": null,
+ "elapsed_ms": 2483.6,
+ "calls": [
+  {
+   "tool": "safe_browsing_v4",
+   "method": "POST",
+   "url": "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=REDACTED",
+   "http_status": null,
+   "ms": 258.3,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  },
+  {
+   "tool": "safe_browsing_v4",
+   "method": "POST",
+   "url": "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=REDACTED",
+   "http_status": null,
+   "ms": 224.6,
+   "error": "BLOCKED: network: 403 Forbidden",
+   "reached_service": false,
+   "response_fields": []
+  }
+ ]
+}
