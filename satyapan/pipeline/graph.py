@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import os
 import re
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 import subprocess
 import time
 import uuid
@@ -133,6 +133,17 @@ class Context:
                    factcheckers=load_allowlist(_data_or_template(d, "factcheckers.txt")),
                    budget=DailyBudget(d / "budget.json", limits), work_dir=d / "work",
                    embedder=embedder, emit=emit, store=store)
+
+
+
+def registry_lookup_url(domain: str) -> str:
+    """ICANN's public lookup page for a domain: who registered it, and when (opens in a browser)."""
+    return f"https://lookup.icann.org/en/lookup?name={quote(domain, safe='')}"
+
+
+def safe_browsing_page(url: str) -> str:
+    """Google's public Safe Browsing site-status page for a URL."""
+    return f"https://transparencyreport.google.com/safe-browsing/search?url={quote(url, safe='')}"
 
 
 def _data_or_template(data_dir: Path, name: str) -> Path:
@@ -500,7 +511,7 @@ def investigate_links(state: dict, ctx: Context) -> dict:
             state["limitations"].append(f"{url} is on an official domain but carries a link onward to {targets}.")
             if gov_claim:
                 state["evidence"].add(
-                    tool="url_analysis", source_name="Official domain rule", source_url=None, target=url,
+                    tool="url_analysis", source_name="Official domain rule", source_url=registry_lookup_url(info["registered"]), target=url,
                     kind="link_risk", stance="contradicts", strength="moderate", external=False,
                     established=f"The link starts on {info['registered']} but carries a redirect to {targets}, "
                                 f"which is a different site.",
@@ -509,7 +520,7 @@ def investigate_links(state: dict, ctx: Context) -> dict:
                                  "as its own link."])
         elif info["official"]:
             state["evidence"].add(
-                tool="url_analysis", source_name="Official domain rule", source_url=None, target=url,
+                tool="url_analysis", source_name="Official domain rule", source_url=registry_lookup_url(info["registered"]), target=url,
                 kind="link_risk", stance="supports", strength="weak", external=False,
                 established=f"{info['registered']} is an official government domain "
                             f"({'gov.in/nic.in' if info['official_suffix'] else 'operator allowlist'}).",
@@ -521,17 +532,20 @@ def investigate_links(state: dict, ctx: Context) -> dict:
             hidden = host[: -len(info["registered"]) - 1] if host.endswith("." + info["registered"]) else ""
             invoked = (f"The message invokes {', '.join(claim.entities[:3])}" if gov_claim
                        else f"The link hides the official-looking name {hidden or 'of a government site'} inside")
+            real_site = hidden if hidden.endswith((".gov.in", ".nic.in")) else ""
             state["evidence"].add(
-                tool="url_analysis", source_name="Official domain rule", source_url=None, target=url,
+                tool="url_analysis", source_name="Official domain rule", source_url=registry_lookup_url(info["registered"]), target=url,
                 kind="link_risk", stance="contradicts", strength="strong", external=False,
                 established=f"{invoked} {'but links to' if gov_claim else ''} {info['registered']}, "
                             f"which is not an official domain and imitates one "
-                            f"({', '.join(sorted(IMPERSONATION_FLAGS & flags))}).".replace("  ", " "),
+                            f"({', '.join(sorted(IMPERSONATION_FLAGS & flags))})."
+                            f"{f' The real site is {real_site}.' if real_site else ''}".replace("  ", " "),
                 independence_key=URL_RULES_KEY,
-                data={"flags": info["flags"], "closest_official": info["closest_official"]})
+                data={"flags": info["flags"], "closest_official": info["closest_official"],
+                      **({"real_site": f"https://{real_site}"} if real_site else {})})
         elif gov_claim and WEAK_IMPERSONATION_FLAGS & flags:
             state["evidence"].add(
-                tool="url_analysis", source_name="Official domain rule", source_url=None, target=url,
+                tool="url_analysis", source_name="Official domain rule", source_url=registry_lookup_url(info["registered"]), target=url,
                 kind="link_risk", stance="contradicts", strength="moderate", external=False,
                 established=f"The message invokes {', '.join(claim.entities[:3])} and links to {info['registered']}, "
                             f"which is not an official government domain "
@@ -540,7 +554,7 @@ def investigate_links(state: dict, ctx: Context) -> dict:
                 limitations=["Some genuine sites use 'gov' in a non-gov.in name. This alone is not proof."])
         elif gov_claim and link_ctas and "foreign_government_domain" not in flags:
             state["evidence"].add(
-                tool="url_analysis", source_name="Official domain rule", source_url=None, target=url,
+                tool="url_analysis", source_name="Official domain rule", source_url=registry_lookup_url(info["registered"]), target=url,
                 kind="link_risk", stance="contradicts", strength="weak", external=False,
                 established=f"The message asks readers to act ({', '.join(link_ctas[:2])}) through "
                             f"{info['registered']}, which is not an official government domain.",
@@ -557,13 +571,13 @@ def investigate_links(state: dict, ctx: Context) -> dict:
             r = _run(state, "rdap", info["registered"], rdap.lookup, ctx.client, info["registered"])
             if r and r.get("status") == "found" and r.get("age_days") is not None and r["age_days"] < 90:
                 state["evidence"].add(
-                    tool="rdap", source_name="Domain registry (RDAP)", source_url=None, target=url,
+                    tool="rdap", source_name="Domain registry (RDAP)", source_url=registry_lookup_url(info["registered"]), target=url,
                     kind="link_risk", stance="contradicts", strength="weak",
                     established=f"{info['registered']} was registered {r['age_days']} days ago ({r['registered']}).",
                     independence_key=f"rdap:{info['registered']}", data=r)
             elif r and r.get("status") == "not_found":
                 state["evidence"].add(
-                    tool="rdap", source_name="Domain registry (RDAP)", source_url=None, target=url,
+                    tool="rdap", source_name="Domain registry (RDAP)", source_url=registry_lookup_url(info["registered"]), target=url,
                     kind="link_risk", stance="contradicts", strength="weak",
                     established=f"{info['registered']} is not registered (the link is dead or invented).",
                     independence_key=f"rdap:{info['registered']}", data=r)
@@ -573,7 +587,7 @@ def investigate_links(state: dict, ctx: Context) -> dict:
         for url, threats in ((hits or ({}, 0))[0]).items():
             state["evidence"].add(
                 tool="safe_browsing", source_name="Google Safe Browsing (Advisory provided by Google)",
-                source_url=None, target=url, kind="link_risk", stance="contradicts", strength="strong",
+                source_url=safe_browsing_page(url), target=url, kind="link_risk", stance="contradicts", strength="strong",
                 established=f"Safe Browsing lists this URL for {', '.join(threats)}. This is an advisory, "
                             f"its accuracy is not guaranteed.",
                 independence_key="safe_browsing", data={"threats": threats})
