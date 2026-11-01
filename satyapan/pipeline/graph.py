@@ -59,6 +59,12 @@ FC_MATCH, FC_POSSIBLE, KNOWN_MATCH = 85, 70, 85
 # Provisional: set on the development split (eval/), never on the test split. A candidate is
 # never evidence by itself.
 SEMANTIC_CANDIDATE = float(os.environ.get("SATYAPAN_SEMANTIC_CANDIDATE", "0.80"))
+# A lower bar for fact-checks that an AI planner query found, or that are in another language than the
+# claim (cross-language cosines run lower). Such a candidate still needs the AI comparison with quotes
+# verified in code, and a match through this lower bar counts at most as MODERATE, so one alone can
+# never make a message FAKE: it needs a second, independent source.
+SEMANTIC_CANDIDATE_WIDE = float(os.environ.get("SATYAPAN_SEMANTIC_CANDIDATE_WIDE", "0.65"))
+MAX_FC_CANDIDATES = 4
 NODE_LABELS = {"validate_input": "Checking the submission", "extract_claims": "Extracting claims",
                "plan_checks": "AI planning which checks to run",
                "check_factchecks": "Searching published fact-checks", "check_official": "Searching official releases",
@@ -222,6 +228,11 @@ def _embed(state: dict, ctx: Context, texts: list[str], kind: str, target: str):
         return None
     state["ai"]["embedding_model"] = ctx.settings.hf_embedding_model
     return _run(state, "hf_embeddings", target, ctx.embedder.embed, texts, kind)
+
+
+def _negated(text: str) -> bool:
+    """True when the text contains a negation word (English, Hindi or Telugu)."""
+    return bool(set(TOKEN_RE.findall(_norm_for_match(text))) & NEGATIONS)
 
 
 def added_negations(message: str, release_text: str) -> list[str]:
@@ -499,11 +510,32 @@ def _factcheck_candidates(state: dict, ctx: Context, claim: Claim, reviews: list
     if q is not None and vecs is not None:
         for c, score in zip(cands, vecs @ q[0]):
             c["cosine"] = round(float(score), 4)
-    keep = [c for c in cands if c["lexical"] >= FC_POSSIBLE or c.get("cosine", 0) >= SEMANTIC_CANDIDATE]
+    keep = []
+    for c in cands:
+        rv, cos = c.get("review") or {}, c.get("cosine", 0)
+        widened = bool(rv) and (str(rv.get("found_by", "")).startswith("AI query")
+                                or (rv.get("language") and claim.language and rv.get("language") != claim.language))
+        if c["lexical"] >= FC_POSSIBLE or cos >= SEMANTIC_CANDIDATE:
+            keep.append(c)
+        elif widened and cos >= SEMANTIC_CANDIDATE_WIDE:
+            c["wide"] = True
+            keep.append(c)
     keep.sort(key=lambda c: max(c.get("cosine", 0), c["lexical"] / 100), reverse=True)
-    for i, c in enumerate(keep[:3]):
+    keep = keep[:MAX_FC_CANDIDATES]
+    for i, c in enumerate(keep):
         c["id"] = f"F{i + 1}"
-    state["fc_candidates"] = keep[:3]
+        rv = c.get("review") or {}
+        how = f"embedding similarity {c['cosine']:.2f}" if c.get("cosine") is not None else f"text similarity {c['lexical']:.0f}/100"
+        _note(state, "check_factchecks",
+              f"{c['id']}: {rv.get('publisher') or rv.get('site') or 'curated debunk'} reviewed a similar claim "
+              f"({how}{', found by ' + rv['found_by'] if rv.get('found_by') else ''}). "
+              f"Sent to the AI to check whether the message makes the same claim.")
+    left = [c for c in cands if c not in keep and c.get("review")]
+    if left:
+        scores = [c["cosine"] for c in left if c.get("cosine") is not None]
+        _note(state, "check_factchecks", f"{len(left)} other fact-check(s) were not close enough to compare"
+                                         + (f" (best embedding similarity {max(scores):.2f})." if scores else "."))
+    state["fc_candidates"] = keep
 
 
 NEGATIONS = {"not", "no", "never", "nor", "cannot", "नहीं", "नही", "न", "मत", "కాదు", "లేదు", "వద్దు"}
@@ -1028,6 +1060,17 @@ def _apply_factcheck(state: dict, ctx: Context, claim: Claim, c: dict, pr: dict)
         return
     conflict = chk.facts_conflict(claim.text, c["text"])
     rv, item = c.get("review"), c.get("item")
+    if _negated(claim.text) != _negated(c["text"]):
+        state["evidence"].add(
+            tool="factcheck_search" if rv else "known_claims_index", origin="ai_comparison",
+            source_name=(rv or {}).get("publisher") or (item or {}).get("publisher") or "Fact-check",
+            source_url=(rv or {}).get("url") or (item or {}).get("url"), target=claim.id, kind="fact_check",
+            stance="neutral", strength="none", independence_key=f"semantic:{(rv or item or {}).get('url')}",
+            established="A fact-check reviewed a similar claim, but one of the two texts denies it and the other "
+                        "does not, so they are not treated as the same claim.",
+            data={"reviewed_claim": c["text"][:300], "negation_mismatch": True})
+        _note(state, "compare_evidence", f"{c['id']}: not counted, one text negates the claim and the other does not.")
+        return
     if conflict["conflict"]:
         state["evidence"].add(
             tool="factcheck_search" if rv else "known_claims_index", origin="ai_comparison",
@@ -1043,6 +1086,10 @@ def _apply_factcheck(state: dict, ctx: Context, claim: Claim, c: dict, pr: dict)
     if rv:
         site = (rv.get("site") or "").lower()
         strength = "strong" if (site in ctx.factcheckers and rv["rating_class"] == "false") else "moderate"
+        if c.get("wide"):
+            # matched through the lower similarity bar: never decisive alone, needs an independent second source
+            strength = "moderate"
+            how += ". This was a looser match, so it counts only with a second, independent source"
         state["evidence"].add(
             tool="factcheck_search", origin="ai_comparison",
             source_name=f"{rv.get('publisher') or site} (via Google Fact Check Tools)", source_url=rv["url"],
