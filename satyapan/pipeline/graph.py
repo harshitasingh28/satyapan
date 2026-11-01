@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 import re
+from urllib.parse import urlsplit
 import subprocess
 import time
 import uuid
@@ -67,6 +68,8 @@ _VECTOR_CACHE: dict = {}      # process-wide embedding cache (public corpus text
 # Strong: the link is built to look like a specific official site.
 IMPERSONATION_FLAGS = {"official_name_inside_other_domain", "lookalike_of_official_domain",
                        "official_label_in_host", "official_name_in_userinfo"}
+# These two carry a full official domain in the link itself, so the link invokes the government on its own.
+SELF_INVOKING_FLAGS = {"official_name_inside_other_domain", "official_name_in_userinfo"}
 # Moderate: suspicious, but legitimate sites can show it too (mygov-style names, IDN domains).
 WEAK_IMPERSONATION_FLAGS = {"gov_token_outside_gov_in", "official_label_fragment_in_host", "punycode_host",
                             "hidden_or_fullwidth_characters"}
@@ -278,6 +281,8 @@ def extract(state: dict, ctx: Context) -> dict:
     links = list(state["user_links"])
     for c in claims:
         links += c.urls
+    if state["text"]:
+        links += extract_urls(state["text"])    # a message that is only a link has no claim, but the link is still checked
     links = list(dict.fromkeys(links))[:10]
     for u in list(links):
         links += embedded_targets(u)       # where an open-redirect style link really sends people
@@ -509,13 +514,19 @@ def investigate_links(state: dict, ctx: Context) -> dict:
                 established=f"{info['registered']} is an official government domain "
                             f"({'gov.in/nic.in' if info['official_suffix'] else 'operator allowlist'}).",
                 independence_key=f"domain:{info['registered']}")
-        elif gov_claim and IMPERSONATION_FLAGS & flags:
+        elif IMPERSONATION_FLAGS & flags and (gov_claim or SELF_INVOKING_FLAGS & flags):
+            # A link that carries a full official domain inside another one (pmkisan.gov.in.ekyc-update.top)
+            # invokes the government by itself, whatever language the message is written in.
+            host = (urlsplit(url).hostname or "").lower()
+            hidden = host[: -len(info["registered"]) - 1] if host.endswith("." + info["registered"]) else ""
+            invoked = (f"The message invokes {', '.join(claim.entities[:3])}" if gov_claim
+                       else f"The link hides the official-looking name {hidden or 'of a government site'} inside")
             state["evidence"].add(
                 tool="url_analysis", source_name="Official domain rule", source_url=None, target=url,
                 kind="link_risk", stance="contradicts", strength="strong", external=False,
-                established=f"The message invokes {', '.join(claim.entities[:3])} but links to {info['registered']}, "
+                established=f"{invoked} {'but links to' if gov_claim else ''} {info['registered']}, "
                             f"which is not an official domain and imitates one "
-                            f"({', '.join(sorted(IMPERSONATION_FLAGS & flags))}).",
+                            f"({', '.join(sorted(IMPERSONATION_FLAGS & flags))}).".replace("  ", " "),
                 independence_key=URL_RULES_KEY,
                 data={"flags": info["flags"], "closest_official": info["closest_official"]})
         elif gov_claim and WEAK_IMPERSONATION_FLAGS & flags:
