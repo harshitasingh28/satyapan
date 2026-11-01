@@ -335,6 +335,11 @@ def plan_checks(state: dict, ctx: Context) -> dict:
             "language": claim.language if claim else None, "decisions": [], "factcheck_queries": [],
             "official_query": None, "problems": []}
     raw = None
+    # The text the claims were read from: the message plus any text read from screenshots. Queries are checked
+    # against all of it, so a number that appears only in a screenshot is not mistaken for an invented one.
+    ocr_texts = [m["ocr_text"] for m in state["media"] if m.get("ocr_text")]
+    source_text = "\n".join([state["text"], *ocr_texts]).strip()
+    brief_text = source_text if state["consent"]["third_party_media"] else state["text"]
     if not claim:
         plan["status"] = "no_claim"
     elif not settings.llm_configured:
@@ -342,7 +347,7 @@ def plan_checks(state: dict, ctx: Context) -> dict:
     elif not state["consent"]["third_party_text"]:
         plan["status"] = "no_consent"
     elif _budget_ok(state, ctx, "hf_chat", "plan", True):
-        brief = {"message": state["text"][:1500], "claims": [c.text[:300] for c in state["claims"][:3]],
+        brief = {"message": brief_text[:1500], "claims": [c.text[:300] for c in state["claims"][:3]],
                  "detected_language": claim.language, "named_bodies": claim.entities[:6],
                  "links": [urlsplit(u).hostname for u in state["links"][:5]],
                  "media": [m["info"].kind for m in state["media"]]}
@@ -354,7 +359,7 @@ def plan_checks(state: dict, ctx: Context) -> dict:
             plan["status"] = "used"
         else:
             plan["status"] = f"failed: {state['tool_runs'][-1].status}"
-    valid, problems = plan_mod.validate_plan(raw, state["text"], claim.text if claim else "") if raw is not None \
+    valid, problems = plan_mod.validate_plan(raw, source_text, claim.text if claim else "") if raw is not None \
         else ({"claim_type": None, "language": None, "checks": {}, "factcheck_queries": [], "official_query": None}, [])
     plan["problems"] = problems
     ai["problems"] += problems

@@ -176,6 +176,24 @@ def test_injected_plan_cannot_add_facts_or_tools(monkeypatch, ctx):
     assert len(rep.ai["plan"]["problems"]) >= 3
 
 
+def test_numbers_read_from_a_screenshot_count_as_in_the_message(monkeypatch, ctx, tmp_path):
+    """A screenshot sent on its own: the query may use a number from the screenshot, not an invented one."""
+    from PIL import Image
+    png = tmp_path / "shot.png"
+    Image.new("RGB", (400, 120), "white").save(png)
+    ocr = "PM Kisan: your Rs 2000 instalment is on hold. Complete e-KYC today."
+    monkeypatch.setattr(graph, "ocr_image", lambda *a, **k: {"ok": True, "text": ocr})
+    _searches(monkeypatch, {})
+    _planner(monkeypatch, {"factcheck_queries": ["PM Kisan Rs 2000 instalment hold", "PM Kisan Rs 5000 instalment"]})
+    st = run(new_state(media=[(png, "shot.png")],
+                       consent={"third_party_text": True, "third_party_media": True}), ctx)
+    rep = to_report(st)
+    assert rep.ai["plan"]["status"] == "used"
+    assert rep.ai["plan"]["factcheck_queries"] == ["PM Kisan Rs 2000 instalment hold"]
+    assert any("(5000)" in p for p in rep.ai["plan"]["problems"])
+    assert not any("(2000)" in p for p in rep.ai["plan"]["problems"])
+
+
 def test_trace_notes_show_the_plan(monkeypatch, ctx):
     _searches(monkeypatch, {"2000 rupee note GPS chip": [REVIEW]})
     _planner(monkeypatch, {"claim_type": "viral_rumour_or_hoax", "language": "en",
