@@ -954,7 +954,7 @@ def write_report(state: dict, ctx: Context) -> dict:
 
 
 TOOL_NAMES = {"factcheck_search": "Google Fact Check search", "safe_browsing": "Google Safe Browsing",
-              "rdap": "Domain registration lookup (RDAP)", "hf_embeddings": "Hugging Face embeddings",
+              "rdap": "Domain registration lookup (RDAP)", "hf_embeddings": "Multilingual embeddings",
               "llm_claims": "AI claim extraction", "ai_comparison": "AI evidence comparison",
               "ai_explanation": "AI explanation", "urlscan": "urlscan.io", "cloud_vision_web": "Google Cloud Vision",
               "sightengine_genai": "Sightengine", "wikidata": "Wikidata"}

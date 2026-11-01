@@ -210,7 +210,7 @@ const INTEGRATIONS: Record<string, string> = {
   ai_chat: "AI chat model",
   ai_embeddings: "AI embeddings",
   hf_chat: "Hugging Face chat model",
-  hf_embeddings: "Hugging Face embeddings",
+  hf_embeddings: "Multilingual embeddings",
   mongodb: "MongoDB storage",
   urlscan: "urlscan.io",
   vision: "Google Cloud Vision",
