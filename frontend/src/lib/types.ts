@@ -107,7 +107,40 @@ export type MediaAssessment = {
   ocr_text?: string;
 };
 
-export type TraceEntry = { node: string; ms: number; tool_runs: string[]; new_evidence: string[] };
+export type TraceEntry = { node: string; ms: number; tool_runs: string[]; new_evidence: string[]; notes?: string[] };
+
+export type AiPlanDecision = {
+  check: string;
+  run: boolean;
+  decided_by: "ai" | "code";
+  why: string;
+  queries?: string[];
+};
+
+export type AiPlan = {
+  status: string;
+  model?: string | null;
+  claim_type?: string | null;
+  language?: string | null;
+  decisions?: AiPlanDecision[];
+  factcheck_queries?: string[];
+  official_query?: string | null;
+  problems?: string[];
+};
+
+export type AiPair = {
+  candidate: string;
+  type: string;
+  source_url?: string | null;
+  text?: string;
+  cosine?: number | null;
+  relation?: string | null;
+  same_subject?: boolean | null;
+  evidence_quote?: string | null;
+  claim_quote?: string | null;
+  verified?: boolean | null;
+  problem?: string | null;
+};
 
 export type AiInfo = {
   chat_model: string | null;
@@ -116,6 +149,8 @@ export type AiInfo = {
   comparison: string;
   explanation: string;
   problems: string[];
+  plan?: AiPlan;
+  pairs?: AiPair[];
 };
 
 export type Report = {
@@ -145,6 +180,7 @@ export type StepEvent = {
   ms?: number;
   tool_runs?: ToolRun[];
   new_evidence?: string[];
+  notes?: string[];
 };
 
 export type InvestigationStatus = "queued" | "running" | "done" | "error" | "interrupted";

@@ -37,3 +37,21 @@ describe("announce", () => {
     expect(announce(fixtureSteps[1]!)).toBe("Fixture extracting finished in 321 milliseconds. 2 new pieces of evidence.");
   });
 });
+
+describe("trace notes", () => {
+  it("keeps the notes the server sends with a finished step", () => {
+    const rows = buildTraceRows([
+      { seq: 1, ts: "2026-11-01T00:00:00Z", node: "plan_checks", phase: "start", label: "AI planning which checks to run" },
+      {
+        seq: 2, ts: "2026-11-01T00:00:01Z", node: "plan_checks", phase: "end", label: "AI planning which checks to run", ms: 900,
+        notes: ["Claim type: viral rumour or hoax.", "AI search query: 2000 rupee note GPS chip"],
+      },
+    ]);
+    expect(rows[0]?.notes).toEqual(["Claim type: viral rumour or hoax.", "AI search query: 2000 rupee note GPS chip"]);
+  });
+
+  it("has no notes when the server sends none", () => {
+    const rows = buildTraceRows(fixtureSteps);
+    expect(rows[0]?.notes).toEqual([]);
+  });
+});

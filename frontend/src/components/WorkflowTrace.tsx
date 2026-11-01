@@ -78,6 +78,15 @@ export function WorkflowTrace({ rows, running, queuedMessage, announcement = "",
                     })}
                   </ul>
                 )}
+                {row.notes.length > 0 && (
+                  <ul className="mt-1.5 space-y-0.5 text-sm" aria-label={`What happened in ${row.label}`}>
+                    {row.notes.map((note, i) => (
+                      <li key={`${row.key}-note-${i}`} className="break-anywhere text-ink-soft">
+                        {note}
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {row.newEvidence.length > 0 && (
                   <p className="mt-1 text-sm text-muted">
                     {row.newEvidence.length} new {row.newEvidence.length === 1 ? "piece" : "pieces"} of evidence:{" "}

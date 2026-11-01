@@ -101,11 +101,50 @@ describe("ResultView", () => {
     const tools = section("Tool runs");
     expect(within(tools).getByRole("table")).toBeInTheDocument();
     expect(within(tools).getByText("Service error")).toBeInTheDocument();
-    const ai = section("How AI was used");
+    const ai = section("How the AI reasoned");
     expect(within(ai).getByText("fixture-chat-model")).toBeInTheDocument();
     expect(within(ai).getByText("Fixture rejected AI output.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Download report (Markdown)" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Download report (JSON)" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Copy link" })).toBeInTheDocument();
+  });
+});
+
+describe("AiBlock plan and comparison", () => {
+  it("shows who decided each check, the AI queries and the quote checks", async () => {
+    const { AiBlock } = await import("@/components/result/AiBlock");
+    render(
+      <AiBlock
+        ai={{
+          chat_model: "m",
+          embedding_model: "e",
+          extraction: "used",
+          comparison: "used",
+          explanation: "template",
+          problems: ["planner query rejected (adds a number not in the message (5000)): '5000 note'"],
+          plan: {
+            status: "used",
+            claim_type: "viral_rumour_or_hoax",
+            language: "hi",
+            decisions: [
+              { check: "Published fact-checks, claim as written", run: true, decided_by: "code", why: "Always searched." },
+              { check: "Extra fact-check searches", run: true, decided_by: "ai", why: "A viral hoax.", queries: ["2000 rupee note GPS chip"] },
+            ],
+          },
+          pairs: [
+            { candidate: "F1", type: "reviewed_claim", verified: true, relation: "supports", same_subject: true, evidence_quote: "GPS chip" },
+            { candidate: "K1", type: "official_release", verified: false, problem: "evidence quote not found in the source text" },
+          ],
+        }}
+      />,
+    );
+    expect(screen.getByText("Viral rumour or hoax")).toBeInTheDocument();
+    expect(screen.getByText("Hindi")).toBeInTheDocument();
+    expect(screen.getByText("2000 rupee note GPS chip")).toBeInTheDocument();
+    expect(screen.getByText("AI")).toBeInTheDocument();
+    expect(screen.getByText("Code rule")).toBeInTheDocument();
+    expect(screen.getByText("Quotes verified in the source")).toBeInTheDocument();
+    expect(screen.getByText("Rejected by code")).toBeInTheDocument();
+    expect(screen.getByText("evidence quote not found in the source text")).toBeInTheDocument();
   });
 });

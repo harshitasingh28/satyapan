@@ -8,6 +8,7 @@ export type TraceRow = {
   ms?: number;
   toolRuns: ToolRun[];
   newEvidence: string[];
+  notes: string[];
   startedAt?: string;
 };
 
@@ -37,6 +38,7 @@ export function buildTraceRows(steps: readonly StepEvent[]): TraceRow[] {
         open: true,
         toolRuns: [],
         newEvidence: [],
+        notes: [],
         startedAt: step.ts,
       };
       rows.push(row);
@@ -45,7 +47,7 @@ export function buildTraceRows(steps: readonly StepEvent[]): TraceRow[] {
     }
     let row = openByNode.get(step.node);
     if (!row) {
-      row = { key: `${step.node}-${step.seq}`, node: step.node, label, open: false, toolRuns: [], newEvidence: [] };
+      row = { key: `${step.node}-${step.seq}`, node: step.node, label, open: false, toolRuns: [], newEvidence: [], notes: [] };
       rows.push(row);
     }
     openByNode.delete(step.node);
@@ -54,6 +56,7 @@ export function buildTraceRows(steps: readonly StepEvent[]): TraceRow[] {
     if (typeof step.ms === "number") row.ms = step.ms;
     row.toolRuns = Array.isArray(step.tool_runs) ? step.tool_runs : [];
     row.newEvidence = Array.isArray(step.new_evidence) ? step.new_evidence : [];
+    row.notes = Array.isArray(step.notes) ? step.notes.filter((n) => typeof n === "string") : [];
   }
   return rows;
 }
