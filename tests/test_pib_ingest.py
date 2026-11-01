@@ -28,7 +28,9 @@ def test_403_from_pib_is_blocked_not_auth_required():
 def test_saved_feed_and_manual_release_are_imported(tmp_path):
     f = tmp_path / "pib.xml"
     f.write_bytes(RSS)
-    env = {"SATYAPAN_DATA_DIR": str(tmp_path / "data"), "PATH": "/usr/bin:/bin"}
+    # The script loads the developer's .env. Empty values here win over it (python-dotenv never overrides a
+    # variable that is already set), so the FIXTURE releases can never reach a real MongoDB database.
+    env = {"SATYAPAN_DATA_DIR": str(tmp_path / "data"), "PATH": "/usr/bin:/bin", "MONGODB_URI": "", "MONGODB_DB": ""}
     run = lambda *a: subprocess.run([sys.executable, str(ROOT / "scripts" / "ingest_pib.py"), *a],
                                     capture_output=True, text=True, env=env)
     assert "new 1" in run("--from-file", str(f)).stdout
