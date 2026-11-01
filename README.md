@@ -104,17 +104,24 @@ Offline tests use clearly labelled fixtures and mocked services. They check the 
 
 Check a deployment with `python deploy/smoke_test.py --api <API URL> --origin <frontend URL> --check-rate-limit`.
 
-**Live results, 1 Nov 2026** (deployed app, real services):
+**Live results, 1 Nov 2026** (deployed app, real services). The ten messages below were run twice that evening, at commit `948628e` and again after commit `d8f7381`, and gave the same verdicts both times. Each check took 7 to 17 seconds.
 
-| Check | Result |
-|---|---|
-| Smoke test | 10/10: live step stream, private records, report download, CORS, rate limit with a spoofed `X-Forwarded-For` |
-| Exact title and link of a real PIB release (PRID 2331041) | GENUINE |
-| Hindi free-laptop forward with a `.top` link | UNVERIFIED (two weak signals, nothing strong) |
-| PM-Kisan message linking `pmkisan.gov.in.ekyc-update.top` | FAKE |
-| Google's Safe Browsing test page | FAKE |
+| Message sent | Verdict | Main evidence |
+|---|---|---|
+| PM-Kisan e-KYC scam in Telugu, linking `pmkisan.gov.in.ekyc-update.top` | FAKE | The link hides pmkisan.gov.in inside ekyc-update.top |
+| A link on its own: Google's Safe Browsing test page | FAKE | Google Safe Browsing lists it as SOCIAL_ENGINEERING |
+| A link on its own: `uidai.gov.in.verify-kyc.top/login` | FAKE | The link hides uidai.gov.in inside verify-kyc.top |
+| "UNESCO declared Jana Gana Mana the best national anthem" | FAKE | 4 published fact-checks: India Today, Snopes, FACTLY, NewsMobile |
+| The same hoax in Hindi | FAKE | A Vishvas News fact-check |
+| Exact title and link of a real PIB release (PRID 2331041) | GENUINE | The linked official release, with the AI's quote verified in it |
+| Prompt injection asking for GENUINE, with a `.top` link | FAKE | The link is not a government domain and is not registered |
+| Screenshot of a PM-Kisan scam (OCR) | FAKE | The same link rules, applied to the text read from the image |
+| "The new 2000 rupee notes have a GPS nano chip" | UNVERIFIED | Fact-checks were found, but none close enough to this claim |
+| Hindi free-laptop forward with a `.top` link | UNVERIFIED | Two weak signals and nothing strong |
 
-Four examples show the system works end to end. They are not an accuracy measurement.
+In every run the AI planner chose the optional checks and wrote English search queries, and code made the decision. Code rejected planner queries that contained a link or added a number not in the message. Earlier the same day the smoke test passed 10/10 against the deployment: live step stream, private records, report download, CORS, and the rate limit with a spoofed `X-Forwarded-For`.
+
+Ten examples show the system works end to end. They are not an accuracy measurement.
 
 Google Cloud Run is an alternative host: see `docs/DEPLOYMENT.md`.
 
