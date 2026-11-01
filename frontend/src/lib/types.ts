@@ -118,7 +118,16 @@ export type AiPlanDecision = {
   queries?: string[];
 };
 
+export type AiReplan = {
+  status: string;
+  why?: string;
+  queries?: string[];
+  problems?: string[];
+  found?: number;
+};
+
 export type AiPlan = {
+  replan?: AiReplan;
   status: string;
   model?: string | null;
   claim_type?: string | null;

@@ -146,5 +146,41 @@ describe("AiBlock plan and comparison", () => {
     expect(screen.getByText("Quotes verified in the source")).toBeInTheDocument();
     expect(screen.getByText("Rejected by code")).toBeInTheDocument();
     expect(screen.getByText("evidence quote not found in the source text")).toBeInTheDocument();
+    expect(screen.getByText("Same claim as the one fact-checked")).toBeInTheDocument();
+  });
+
+  it("shows the one re-plan, its new searches and what code rejected", async () => {
+    const { AiBlock } = await import("@/components/result/AiBlock");
+    render(
+      <AiBlock
+        ai={{
+          chat_model: "m",
+          embedding_model: "e",
+          extraction: "used",
+          comparison: "no_candidates",
+          explanation: "template",
+          problems: [],
+          plan: {
+            status: "used",
+            claim_type: "viral_rumour_or_hoax",
+            language: "en",
+            decisions: [],
+            replan: {
+              status: "used",
+              why: "Use the words a fact-check headline would use.",
+              queries: ["2000 rupee note GPS chip"],
+              problems: ["re-plan query rejected (repeats an earlier search): 'currency tracking'"],
+              found: 2,
+            },
+          },
+          pairs: [],
+        }}
+      />,
+    );
+    expect(screen.getByText("Second attempt: the AI re-planned once")).toBeInTheDocument();
+    expect(screen.getByText("Use the words a fact-check headline would use.")).toBeInTheDocument();
+    expect(screen.getByText("2000 rupee note GPS chip")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("re-plan query rejected (repeats an earlier search): 'currency tracking'")).toBeInTheDocument();
   });
 });

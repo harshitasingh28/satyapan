@@ -1,5 +1,5 @@
 import { aiExplanationLabel, aiStepLabel } from "@/lib/labels";
-import type { AiInfo, AiPair, AiPlan } from "@/lib/types";
+import type { AiInfo, AiPair, AiPlan, AiReplan } from "@/lib/types";
 import { Chip, SafeLink } from "../primitives";
 
 const LANGUAGES: Record<string, string> = { en: "English", hi: "Hindi", te: "Telugu", mixed: "Mixed", other: "Other" };
@@ -75,9 +75,72 @@ function PlanSection({ plan }: { plan: AiPlan }) {
           </table>
         </div>
       )}
+      {plan.replan && plan.replan.status !== "not_run" && <ReplanSection replan={plan.replan} />}
     </div>
   );
 }
+
+function ReplanSection({ replan }: { replan: AiReplan }) {
+  const queries = replan.queries ?? [];
+  const problems = replan.problems ?? [];
+  return (
+    <div className="mt-3 rounded-md border border-rule p-3 text-sm">
+      <p className="font-semibold">Second attempt: the AI re-planned once</p>
+      <p className="mt-1 text-muted">
+        No fact-check was close enough, so the AI looked at what its searches returned and wrote new ones. Code checks
+        them by the same rules. This happens at most once.
+      </p>
+      <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-[max-content_minmax(0,1fr)]">
+        <dt className="text-muted">Re-plan</dt>
+        <dd>{replan.status === "used" ? "Ran" : aiStepLabel(replan.status)}</dd>
+        {replan.why && (
+          <>
+            <dt className="text-muted">AI&apos;s reason</dt>
+            <dd className="break-anywhere">{replan.why}</dd>
+          </>
+        )}
+        {replan.status === "used" && (
+          <>
+            <dt className="text-muted">New searches</dt>
+            <dd className="break-anywhere">
+              {queries.length === 0 ? (
+                "None accepted"
+              ) : (
+                <ul className="list-disc pl-5">
+                  {queries.map((q, i) => (
+                    <li key={i}>
+                      <q>{q}</q>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </dd>
+            <dt className="text-muted">New fact-checks found</dt>
+            <dd className="tabular">{replan.found ?? 0}</dd>
+          </>
+        )}
+        {problems.length > 0 && (
+          <>
+            <dt className="text-muted">Rejected by code</dt>
+            <dd className="break-anywhere">
+              <ul className="list-disc pl-5">
+                {problems.map((p, i) => (
+                  <li key={i}>{p}</li>
+                ))}
+              </ul>
+            </dd>
+          </>
+        )}
+      </dl>
+    </div>
+  );
+}
+
+const FACTCHECK_RELATION: Record<string, string> = {
+  supports: "Same claim as the one fact-checked",
+  contradicts: "The opposite of the fact-checked claim",
+  insufficient: "Not the same claim",
+};
 
 function PairItem({ pair }: { pair: AiPair }) {
   const kind = pair.type === "official_release" ? "Official release" : "Published fact-check";
@@ -98,7 +161,9 @@ function PairItem({ pair }: { pair: AiPair }) {
           <>
             <dt className="text-muted">AI judgement</dt>
             <dd>
-              {humanType(pair.relation)}
+              {pair.type === "reviewed_claim"
+                ? FACTCHECK_RELATION[pair.relation ?? ""] ?? humanType(pair.relation)
+                : humanType(pair.relation)}
               {pair.same_subject === false ? ", different subject" : ""}
             </dd>
             {pair.evidence_quote && (
